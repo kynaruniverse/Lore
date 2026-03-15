@@ -3,6 +3,7 @@
 // Hero with knowledge network background, trending lores, recent pages
 
 import { Link } from "wouter";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, TrendingUp, Clock, Flame, Users, FileText } from "lucide-react";
 import Layout from "@/components/Layout";
@@ -10,13 +11,27 @@ import { getAllLores, getRecentPages, getTrendingLores } from "@/lib/loreStore";
 import { categoryIcons } from "@/lib/data";
 import type { Lore } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import LoreCard from "@/components/LoreCard";
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663439820849/SE9XUZepF7G4m63nARXJEu/lore-hero-bg_f40508ff.jpg";
 
 export default function Home() {
-  const recentPages = getRecentPages(6);
-  const trendingLores = getTrendingLores();
-  const allLores = getAllLores();
+  const [recentPages, setRecentPages] = useState<LorePage[]>([]);
+  const [trendingLores, setTrendingLores] = useState<Lore[]>([]);
+  const [allLores, setAllLores] = useState<Lore[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setRecentPages(await getRecentPages(6));
+      setTrendingLores(await getTrendingLores());
+      setAllLores(await getAllLores());
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
 
   return (
     <Layout>
@@ -97,141 +112,101 @@ export default function Home() {
 
         <div className="container py-8 space-y-12">
           {/* ── Trending Lores ── */}
-          <section>
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-primary" />
+          {loading ? (
+            <div className="text-center text-muted-foreground">Loading trending lores...</div>
+          ) : (
+            <section>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <h2
+                    className="text-lg font-semibold text-foreground"
+                    style={{ fontFamily: "'Lora', Georgia, serif" }}
+                  >
+                    Trending
+                  </h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {trendingLores.map((lore, i) => (
+                  <LoreCard key={lore.id} lore={lore} index={i} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* ── All Lores ── */}
+          {loading ? (
+            <div className="text-center text-muted-foreground">Loading all lores...</div>
+          ) : (
+            <section>
+              <div className="flex items-center gap-2 mb-5">
+                <Flame className="w-4 h-4 text-primary" />
                 <h2
                   className="text-lg font-semibold text-foreground"
                   style={{ fontFamily: "'Lora', Georgia, serif" }}
                 >
-                  Trending
+                  All Lores
                 </h2>
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {trendingLores.map((lore, i) => (
-                <LoreCard key={lore.id} lore={lore} index={i} />
-              ))}
-            </div>
-          </section>
-
-          {/* ── All Lores ── */}
-          <section>
-            <div className="flex items-center gap-2 mb-5">
-              <Flame className="w-4 h-4 text-primary" />
-              <h2
-                className="text-lg font-semibold text-foreground"
-                style={{ fontFamily: "'Lora', Georgia, serif" }}
-              >
-                All Lores
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {allLores.map((lore, i) => (
-                <LoreCard key={lore.id} lore={lore} index={i} />
-              ))}
-            </div>
-          </section>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {allLores.map((lore, i) => (
+                  <LoreCard key={lore.id} lore={lore} index={i} />
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* ── Recently Updated Pages ── */}
-          <section>
-            <div className="flex items-center gap-2 mb-5">
-              <Clock className="w-4 h-4 text-primary" />
-              <h2
-                className="text-lg font-semibold text-foreground"
-                style={{ fontFamily: "'Lora', Georgia, serif" }}
-              >
-                Recently Updated
-              </h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {recentPages.map((page, i) => {
-                const lore = allLores.find((l) => l.id === page.loreId);
-                return (
-                  <motion.div
-                    key={page.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                  >
-                    <Link href={`/lore/${page.loreId}/${page.slug}`}>
-                      <div className="lore-card p-4 flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0 text-base">
-                          {lore ? categoryIcons[lore.category] : "📄"}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs text-muted-foreground">{lore?.title}</span>
-                            <span className="lore-tag">{page.category}</span>
+          {loading ? (
+            <div className="text-center text-muted-foreground">Loading recent pages...</div>
+          ) : (
+            <section>
+              <div className="flex items-center gap-2 mb-5">
+                <Clock className="w-4 h-4 text-primary" />
+                <h2
+                  className="text-lg font-semibold text-foreground"
+                  style={{ fontFamily: "'Lora', Georgia, serif" }}
+                >
+                  Recently Updated
+                </h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {recentPages.map((page, i) => {
+                  const lore = allLores.find((l) => l.id === page.loreId);
+                  return (
+                    <motion.div
+                      key={page.id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                    >
+                      <Link href={`/lore/${page.loreId}/${page.slug}`}>
+                        <div className="lore-card p-4 flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0 text-base">
+                            {lore ? categoryIcons[lore.category] : "📄"}
                           </div>
-                          <p className="text-sm font-medium text-foreground truncate">{page.title}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{page.excerpt}</p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs text-muted-foreground">{lore?.title}</span>
+                              <span className="lore-tag">{page.category}</span>
+                            </div>
+                            <p className="text-sm font-medium text-foreground truncate">{page.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{page.excerpt}</p>
+                          </div>
+                          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-1" />
                         </div>
-                        <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-1" />
-                      </div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </section>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </Layout>
   );
 }
 
-function LoreCard({ lore, index }: { lore: Lore; index: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.07, duration: 0.35 }}
-    >
-      <Link href={`/lore/${lore.slug}`}>
-        <div className="lore-card overflow-hidden group">
-          {/* Cover image */}
-          <div className="relative h-36 overflow-hidden">
-            <img
-              src={lore.coverImage}
-              alt={lore.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
-            {lore.trending && (
-              <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 bg-primary/90 rounded-full text-primary-foreground text-[10px] font-medium">
-                <TrendingUp className="w-2.5 h-2.5" />
-                Trending
-              </div>
-            )}
-            <div className="absolute bottom-2 left-3">
-              <span className="text-lg">{categoryIcons[lore.category]}</span>
-            </div>
-          </div>
 
-          {/* Info */}
-          <div className="p-4">
-            <h3
-              className="font-semibold text-foreground text-base mb-1 group-hover:text-primary transition-colors"
-              style={{ fontFamily: "'Lora', Georgia, serif" }}
-            >
-              {lore.title}
-            </h3>
-            <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{lore.description}</p>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <FileText className="w-3 h-3" />
-                {lore.pageCount} pages
-              </span>
-              <span className="flex items-center gap-1">
-                <Users className="w-3 h-3" />
-                {lore.contributorCount.toLocaleString()}
-              </span>
-            </div>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
-  );
-}

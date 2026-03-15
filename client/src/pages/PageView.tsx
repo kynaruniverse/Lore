@@ -2,6 +2,9 @@
 // Individual knowledge page with content, relationships, knowledge gaps
 
 import { useParams, Link } from "wouter";
+import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import { motion } from "framer-motion";
 import { ArrowLeft, AlertCircle, ExternalLink, Eye, Calendar, Tag, Edit3 } from "lucide-react";
 import Layout from "@/components/Layout";
@@ -10,11 +13,43 @@ import { relationshipLabels } from "@/lib/data";
 import KnowledgeGraph from "@/components/KnowledgeGraph";
 
 export default function PageView() {
+  const [lore, setLore] = useState<Lore | undefined>(undefined);
+  const [page, setPage] = useState<LorePage | undefined>(undefined);
+  const [relatedPages, setRelatedPages] = useState<LorePage[]>([]);
+  const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+
   const { loreSlug, pageSlug } = useParams<{ loreSlug: string; pageSlug: string }>();
-  const lore = getLoreBySlug(loreSlug);
-  const page = lore ? getPageBySlug(lore.id, pageSlug) : undefined;
-  const relatedPages = page ? getRelatedPages(page) : [];
-  const canEdit = page ? canEditPage(page.id) : false;
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const fetchedLore = await getLoreBySlug(loreSlug);
+      setLore(fetchedLore);
+
+      if (fetchedLore) {
+        const fetchedPage = await getPageBySlug(fetchedLore.id, pageSlug);
+        setPage(fetchedPage);
+
+        if (fetchedPage) {
+          setRelatedPages(await getRelatedPages(fetchedPage));
+          setCanEdit(await canEditPage(fetchedPage.id));
+        }
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [loreSlug, pageSlug]);
+
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container py-16 text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!lore || !page) {
     return (
@@ -29,7 +64,7 @@ export default function PageView() {
     );
   }
 
-  const paragraphs = page.content.split("\n\n");
+
 
   return (
     <Layout>
@@ -122,30 +157,9 @@ export default function PageView() {
 
                 {/* Content */}
                 <div className="lore-prose">
-                  {paragraphs.map((para, i) => {
-                    if (para.startsWith("## ")) {
-                      return (
-                        <h2 key={i} style={{ fontFamily: "'Lora', Georgia, serif" }}>
-                          {para.replace("## ", "")}
-                        </h2>
-                      );
-                    }
-                    if (para.startsWith("# ")) {
-                      return (
-                        <h1 key={i} style={{ fontFamily: "'Lora', Georgia, serif" }}>
-                          {para.replace("# ", "")}
-                        </h1>
-                      );
-                    }
-                    if (para.startsWith("### ")) {
-                      return (
-                        <h3 key={i} style={{ fontFamily: "'Lora', Georgia, serif" }}>
-                          {para.replace("### ", "")}
-                        </h3>
-                      );
-                    }
-                    return <p key={i}>{para}</p>;
-                  })}
+                  <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
+                    {page.content}
+                  </ReactMarkdown>
                 </div>
 
                 {/* Knowledge gaps */}

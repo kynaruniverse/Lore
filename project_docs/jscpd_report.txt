@@ -1,0 +1,79 @@
+Clone found (tsx):
+ - [1m[32mLore/client/src/components/ui/input.tsx[39m[22m [29:2 - 53:6] (24 lines, 143 tokens)
+   [1m[32mLore/client/src/components/ui/textarea.tsx[39m[22m [29:2 - 53:9]
+
+Clone found (javascript):
+ - [1m[32mLore/client/src/components/ui/context-menu.tsx[39m[22m [103:567 - 197:68] (94 lines, 472 tokens)
+   [1m[32mLore/client/src/components/ui/dropdown-menu.tsx[39m[22m [43:569 - 156:52]
+
+Clone found (javascript):
+ - [1m[32mLore/client/src/pages/Home.tsx[39m[22m [132:2 - 156:5] (24 lines, 209 tokens)
+   [1m[32mLore/client/src/pages/LoreHub.tsx[39m[22m [151:9 - 168:5]
+
+Clone found (tsx):
+ - [1m[32mLore/client/src/pages/EditPage.tsx[39m[22m [48:2 - 63:3] (15 lines, 115 tokens)
+   [1m[32mLore/client/src/pages/PageView.tsx[39m[22m [17:6 - 32:6]
+
+Clone found (javascript):
+ - [1m[32mLore/client/src/pages/CreatePage.tsx[39m[22m [114:9 - 145:13] (31 lines, 279 tokens)
+   [1m[32mLore/client/src/pages/EditPage.tsx[39m[22m [158:9 - 191:2]
+
+Clone found (javascript):
+ - [1m[32mLore/client/src/pages/CreatePage.tsx[39m[22m [199:2 - 272:2] (73 lines, 682 tokens)
+   [1m[32mLore/client/src/pages/EditPage.tsx[39m[22m [261:3 - 324:11]
+
+Clone found (tsx):
+ - [1m[32mLore/client/src/pages/CreatePage.tsx[39m[22m [10:2 - 24:11] (14 lines, 129 tokens)
+   [1m[32mLore/client/src/pages/EditPage.tsx[39m[22m [9:2 - 23:9]
+
+Clone found (tsx):
+ - [1m[32mLore/client/src/pages/CreatePage.tsx[39m[22m [37:6 - 52:69] (15 lines, 107 tokens)
+   [1m[32mLore/client/src/pages/GraphView.tsx[39m[22m [120:2 - 133:15]
+
+Clone found (tsx):
+ - [1m[32mLore/client/src/pages/CreatePage.tsx[39m[22m [64:2 - 87:8] (23 lines, 184 tokens)
+   [1m[32mLore/client/src/pages/EditPage.tsx[39m[22m [94:7 - 117:8]
+
+Clone found (tsx):
+ - [1m[32mLore/client/src/pages/CreatePage.tsx[39m[22m [105:3 - 117:2] (12 lines, 107 tokens)
+   [1m[32mLore/client/src/pages/EditPage.tsx[39m[22m [149:3 - 161:5]
+
+Clone found (javascript):
+ - [1m[32mLore/client/src/pages/CreateLore.tsx[39m[22m [81:8 - 124:4] (43 lines, 335 tokens)
+   [1m[32mLore/client/src/pages/EditPage.tsx[39m[22m [166:8 - 158:2]
+
+Clone found (tsx):
+ - [1m[32mLore/client/src/pages/CreateLore.tsx[39m[22m [98:12 - 111:41] (13 lines, 94 tokens)
+   [1m[32mLore/client/src/pages/CreatePage.tsx[39m[22m [142:6 - 155:57]
+
+Clone found (tsx):
+ - [1m[32mLore/client/src/pages/CreateLore.tsx[39m[22m [152:15 - 163:25] (11 lines, 90 tokens)
+   [1m[32mLore/client/src/pages/CreatePage.tsx[39m[22m [221:15 - 232:41]
+
+Clone found (javascript):
+ - [1m[32mLore/client/src/components/KnowledgeGraph.tsx[39m[22m [231:5 - 241:2] (10 lines, 102 tokens)
+   [1m[32mLore/client/src/pages/GraphView.tsx[39m[22m [240:3 - 248:2]
+
+[90m┌────────────[39m[90m┬────────────────[39m[90m┬─────────────[39m[90m┬──────────────[39m[90m┬──────────────[39m[90m┬──────────────────[39m[90m┬───────────────────┐[39m
+[90m│[39m[31m Format     [39m[90m│[39m[31m Files analyzed [39m[90m│[39m[31m Total lines [39m[90m│[39m[31m Total tokens [39m[90m│[39m[31m Clones found [39m[90m│[39m[31m Duplicated lines [39m[90m│[39m[31m Duplicated tokens [39m[90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m javascript [90m│[39m 68             [90m│[39m 6392        [90m│[39m 43263        [90m│[39m 6            [90m│[39m 275 (4.3%)       [90m│[39m 2079 (4.81%)      [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m tsx        [90m│[39m 70             [90m│[39m 9139        [90m│[39m 62918        [90m│[39m 8            [90m│[39m 127 (1.39%)      [90m│[39m 969 (1.54%)       [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m typescript [90m│[39m 6              [90m│[39m 661         [90m│[39m 6300         [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m css        [90m│[39m 1              [90m│[39m 381         [90m│[39m 3132         [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m markdown   [90m│[39m 4              [90m│[39m 894         [90m│[39m 9971         [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m diff       [90m│[39m 1              [90m│[39m 26          [90m│[39m 118          [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m markup     [90m│[39m 1              [90m│[39m 23          [90m│[39m 232          [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m json       [90m│[39m 4              [90m│[39m 160         [90m│[39m 1071         [90m│[39m 0            [90m│[39m 0 (0%)           [90m│[39m 0 (0%)            [90m│[39m
+[90m├────────────[39m[90m┼────────────────[39m[90m┼─────────────[39m[90m┼──────────────[39m[90m┼──────────────[39m[90m┼──────────────────[39m[90m┼───────────────────┤[39m
+[90m│[39m [1mTotal:[22m     [90m│[39m 155            [90m│[39m 17676       [90m│[39m 127005       [90m│[39m 14           [90m│[39m 402 (2.27%)      [90m│[39m 3048 (2.4%)       [90m│[39m
+[90m└────────────[39m[90m┴────────────────[39m[90m┴─────────────[39m[90m┴──────────────[39m[90m┴──────────────[39m[90m┴──────────────────[39m[90m┴───────────────────┘[39m
+[90mFound 14 clones.[39m
+[3m[90mDetection time:[39m[23m: 1.040s

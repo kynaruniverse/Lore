@@ -3,6 +3,13 @@
 // Manages user-created Lores and Pages on top of seed data
 // ============================================================
 
+import { encrypt, decrypt } from "./encryption";
+
+// ============================================================
+// LORE — localStorage Store
+// Manages user-created Lores and Pages on top of seed data
+// ============================================================
+
 import { nanoid } from "nanoid";
 import { lores as seedLores, pages as seedPages, type Lore, type LorePage, type RelationshipType } from "./data";
 
@@ -12,32 +19,40 @@ const EDITED_SEED_PAGES_KEY = "lore_edited_seed_pages"; // Tracks edits to seed 
 
 // ── Lore helpers ──────────────────────────────────────────
 
-function readUserLores(): Lore[] {
+async function readUserLores(): Promise<Lore[]> {
   try {
     const raw = localStorage.getItem(LORES_KEY);
-    return raw ? (JSON.parse(raw) as Lore[]) : [];
-  } catch {
+    if (!raw) return [];
+    const decrypted = await decrypt(raw);
+    return JSON.parse(decrypted) as Lore[];
+  } catch (error) {
+    console.error("Error reading user lores from localStorage:", error);
     return [];
   }
 }
 
-function writeUserLores(lores: Lore[]): void {
-  localStorage.setItem(LORES_KEY, JSON.stringify(lores));
+async function writeUserLores(lores: Lore[]): Promise<void> {
+  try {
+    const encrypted = await encrypt(JSON.stringify(lores));
+    localStorage.setItem(LORES_KEY, encrypted);
+  } catch (error) {
+    console.error("Error writing user lores to localStorage:", error);
+  }
 }
 
-export function getAllLores(): Lore[] {
-  return [...seedLores, ...readUserLores()];
+export async function getAllLores(): Promise<Lore[]> {
+  return [...seedLores, ...(await readUserLores())];
 }
 
-export function getLoreById(id: string): Lore | undefined {
-  return getAllLores().find((l) => l.id === id);
+export async function getLoreById(id: string): Promise<Lore | undefined> {
+  return (await getAllLores()).find((l) => l.id === id);
 }
 
-export function getLoreBySlug(slug: string): Lore | undefined {
-  return getAllLores().find((l) => l.slug === slug);
+export async function getLoreBySlug(slug: string): Promise<Lore | undefined> {
+  return (await getAllLores()).find((l) => l.slug === slug);
 }
 
-export function createLore(input: {
+export async function createLore(input: {
   title: string;
   description: string;
   category: Lore["category"];
@@ -50,7 +65,7 @@ export function createLore(input: {
     .replace(/^-|-$/g, "");
 
   // Ensure slug uniqueness
-  const existing = getAllLores().map((l) => l.slug);
+  const existing = (await getAllLores()).map((l) => l.slug);
   let finalSlug = slug;
   let counter = 2;
   while (existing.includes(finalSlug)) {
@@ -77,68 +92,76 @@ export function createLore(input: {
     trending: false,
   };
 
-  const userLores = readUserLores();
-  writeUserLores([...userLores, newLore]);
+  const userLores = await readUserLores();
+  await writeUserLores([...userLores, newLore]);
   return newLore;
 }
 
-export function updateLore(id: string, updates: Partial<Lore>): void {
-  const userLores = readUserLores();
+export async function updateLore(id: string, updates: Partial<Lore>): Promise<void> {
+  const userLores = await readUserLores();
   const idx = userLores.findIndex((l) => l.id === id);
   if (idx !== -1) {
     userLores[idx] = { ...userLores[idx], ...updates, updatedAt: new Date().toISOString().split("T")[0] };
-    writeUserLores(userLores);
+    await writeUserLores(userLores);
   }
 }
 
-export function deleteLore(id: string): void {
-  const userLores = readUserLores();
-  writeUserLores(userLores.filter((l) => l.id !== id));
+export async function deleteLore(id: string): Promise<void> {
+  const userLores = await readUserLores();
+  await writeUserLores(userLores.filter((l) => l.id !== id));
   // Also delete associated pages
-  const userPages = readUserPages();
-  writeUserPages(userPages.filter((p) => p.loreId !== id));
+  const userPages = await readUserPages();
+  await writeUserPages(userPages.filter((p) => p.loreId !== id));
 }
 
 // ── Page helpers ──────────────────────────────────────────
 
-function readUserPages(): LorePage[] {
+async function readUserPages(): Promise<LorePage[]> {
   try {
     const raw = localStorage.getItem(PAGES_KEY);
-    return raw ? (JSON.parse(raw) as LorePage[]) : [];
-  } catch {
+    if (!raw) return [];
+    const decrypted = await decrypt(raw);
+    return JSON.parse(decrypted) as LorePage[];
+  } catch (error) {
+    console.error("Error reading user pages from localStorage:", error);
     return [];
   }
 }
 
-function writeUserPages(pages: LorePage[]): void {
-  localStorage.setItem(PAGES_KEY, JSON.stringify(pages));
+async function writeUserPages(pages: LorePage[]): Promise<void> {
+  try {
+    const encrypted = await encrypt(JSON.stringify(pages));
+    localStorage.setItem(PAGES_KEY, encrypted);
+  } catch (error) {
+    console.error("Error writing user pages to localStorage:", error);
+  }
 }
 
-export function getAllPages(): LorePage[] {
-  const editedSeedPages = readEditedSeedPages();
+export async function getAllPages(): Promise<LorePage[]> {
+  const editedSeedPages = await readEditedSeedPages();
   const seedPagesWithEdits = seedPages.map((p) => editedSeedPages[p.id] || p);
-  return [...seedPagesWithEdits, ...readUserPages()];
+  return [...seedPagesWithEdits, ...(await readUserPages())];
 }
 
-export function getPageById(id: string): LorePage | undefined {
-  return getAllPages().find((p) => p.id === id);
+export async function getPageById(id: string): Promise<LorePage | undefined> {
+  return (await getAllPages()).find((p) => p.id === id);
 }
 
-export function getPageBySlug(loreId: string, slug: string): LorePage | undefined {
-  return getAllPages().find((p) => p.loreId === loreId && p.slug === slug);
+export async function getPageBySlug(loreId: string, slug: string): Promise<LorePage | undefined> {
+  return (await getAllPages()).find((p) => p.loreId === loreId && p.slug === slug);
 }
 
-export function getPagesByLore(loreId: string): LorePage[] {
-  return getAllPages().filter((p) => p.loreId === loreId);
+export async function getPagesByLore(loreId: string): Promise<LorePage[]> {
+  return (await getAllPages()).filter((p) => p.loreId === loreId);
 }
 
-export function getRelatedPages(page: LorePage): LorePage[] {
-  return page.relationships
-    .map((r) => getPageById(r.targetPageId))
-    .filter((p): p is LorePage => p !== undefined);
+export async function getRelatedPages(page: LorePage): Promise<LorePage[]> {
+  const relatedPagePromises = page.relationships.map((r) => getPageById(r.targetPageId));
+  const relatedPages = await Promise.all(relatedPagePromises);
+  return relatedPages.filter((p): p is LorePage => p !== undefined);
 }
 
-export function createPage(input: {
+export async function createPage(input: {
   loreId: string;
   title: string;
   category: string;
@@ -152,7 +175,7 @@ export function createPage(input: {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
 
-  const existingSlugs = getAllPages()
+  const existingSlugs = (await getAllPages())
     .filter((p) => p.loreId === input.loreId)
     .map((p) => p.slug);
   let finalSlug = slug;
@@ -182,23 +205,23 @@ export function createPage(input: {
     views: 0,
   };
 
-  const userPages = readUserPages();
-  writeUserPages([...userPages, newPage]);
+  const userPages = await readUserPages();
+  await writeUserPages([...userPages, newPage]);
 
   // Increment lore pageCount for user-created lores
-  const userLores = readUserLores();
+  const userLores = await readUserLores();
   const loreIdx = userLores.findIndex((l) => l.id === input.loreId);
   if (loreIdx !== -1) {
     userLores[loreIdx].pageCount += 1;
     userLores[loreIdx].updatedAt = now;
-    writeUserLores(userLores);
+    await writeUserLores(userLores);
   }
 
   return newPage;
 }
 
-export function updatePage(id: string, updates: Partial<LorePage>): void {
-  const userPages = readUserPages();
+export async function updatePage(id: string, updates: Partial<LorePage>): Promise<void> {
+  const userPages = await readUserPages();
   const idx = userPages.findIndex((p) => p.id === id);
   if (idx !== -1) {
     const now = new Date().toISOString().split("T")[0];
@@ -208,52 +231,60 @@ export function updatePage(id: string, updates: Partial<LorePage>): void {
         updates.content.replace(/#+\s/g, "").slice(0, 160).trim() +
         (updates.content.length > 160 ? "…" : "");
     }
-    writeUserPages(userPages);
+    await writeUserPages(userPages);
   }
 }
 
-export function deletePage(id: string): void {
-  const userPages = readUserPages();
-  writeUserPages(userPages.filter((p) => p.id !== id));
+export async function deletePage(id: string): Promise<void> {
+  const userPages = await readUserPages();
+  await writeUserPages(userPages.filter((p) => p.id !== id));
 }
 
-export function isUserPage(id: string): boolean {
-  return readUserPages().some((p) => p.id === id);
+export async function isUserPage(id: string): Promise<boolean> {
+  return (await readUserPages()).some((p) => p.id === id);
 }
 
 // ── Edited seed pages tracking ────────────────────────
 
-function readEditedSeedPages(): Record<string, LorePage> {
+async function readEditedSeedPages(): Promise<Record<string, LorePage>> {
   try {
     const raw = localStorage.getItem(EDITED_SEED_PAGES_KEY);
-    return raw ? (JSON.parse(raw) as Record<string, LorePage>) : {};
-  } catch {
+    if (!raw) return {};
+    const decrypted = await decrypt(raw);
+    return JSON.parse(decrypted) as Record<string, LorePage>;
+  } catch (error) {
+    console.error("Error reading edited seed pages from localStorage:", error);
     return {};
   }
 }
 
-function writeEditedSeedPages(pages: Record<string, LorePage>): void {
-  localStorage.setItem(EDITED_SEED_PAGES_KEY, JSON.stringify(pages));
+async function writeEditedSeedPages(pages: Record<string, LorePage>): Promise<void> {
+  try {
+    const encrypted = await encrypt(JSON.stringify(pages));
+    localStorage.setItem(EDITED_SEED_PAGES_KEY, encrypted);
+  } catch (error) {
+    console.error("Error writing edited seed pages to localStorage:", error);
+  }
 }
 
-export function getPageWithEdits(id: string): LorePage | undefined {
-  const editedSeedPages = readEditedSeedPages();
+export async function getPageWithEdits(id: string): Promise<LorePage | undefined> {
+  const editedSeedPages = await readEditedSeedPages();
   if (editedSeedPages[id]) {
     return editedSeedPages[id];
   }
-  return getPageById(id);
+  return await getPageById(id);
 }
 
-export function canEditPage(id: string): boolean {
+export async function canEditPage(id: string): Promise<boolean> {
   // Can edit both user-created pages and seed pages
   return true;
 }
 
-export function editSeedPage(id: string, updates: Partial<LorePage>): void {
-  const page = getPageById(id);
+export async function editSeedPage(id: string, updates: Partial<LorePage>): Promise<void> {
+  const page = await getPageById(id);
   if (!page) return;
 
-  const editedSeedPages = readEditedSeedPages();
+  const editedSeedPages = await readEditedSeedPages();
   const now = new Date().toISOString().split("T")[0];
   const updatedPage = { ...page, ...updates, updatedAt: now };
   if (updates.content) {
@@ -262,18 +293,18 @@ export function editSeedPage(id: string, updates: Partial<LorePage>): void {
       (updates.content.length > 160 ? "…" : "");
   }
   editedSeedPages[id] = updatedPage;
-  writeEditedSeedPages(editedSeedPages);
+  await writeEditedSeedPages(editedSeedPages);
 }
 
-export function isUserLore(id: string): boolean {
-  return readUserLores().some((l) => l.id === id);
+export async function isUserLore(id: string): Promise<boolean> {
+  return (await readUserLores()).some((l) => l.id === id);
 }
 
 // ── Search helpers ────────────────────────────────────────
 
-export function searchPages(query: string): LorePage[] {
+export async function searchPages(query: string): Promise<LorePage[]> {
   const q = query.toLowerCase();
-  return getAllPages().filter(
+  return (await getAllPages()).filter(
     (p) =>
       p.title.toLowerCase().includes(q) ||
       p.excerpt.toLowerCase().includes(q) ||
@@ -282,9 +313,9 @@ export function searchPages(query: string): LorePage[] {
   );
 }
 
-export function searchLores(query: string): Lore[] {
+export async function searchLores(query: string): Promise<Lore[]> {
   const q = query.toLowerCase();
-  return getAllLores().filter(
+  return (await getAllLores()).filter(
     (l) =>
       l.title.toLowerCase().includes(q) ||
       l.description.toLowerCase().includes(q) ||
@@ -292,12 +323,12 @@ export function searchLores(query: string): Lore[] {
   );
 }
 
-export function getTrendingLores(): Lore[] {
-  return getAllLores().filter((l) => l.trending);
+export async function getTrendingLores(): Promise<Lore[]> {
+  return (await getAllLores()).filter((l) => l.trending);
 }
 
-export function getRecentPages(limit = 8): LorePage[] {
-  return [...getAllPages()]
+export async function getRecentPages(limit = 8): Promise<LorePage[]> {
+  return [...(await getAllPages())]
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, limit);
 }

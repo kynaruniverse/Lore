@@ -2,6 +2,7 @@
 // Shows all pages within a specific Lore, with knowledge gap indicators
 
 import { useParams, Link } from "wouter";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Plus, FileText, Users, Eye, AlertCircle, ArrowRight, TrendingUp, Network } from "lucide-react";
 import Layout from "@/components/Layout";
@@ -10,9 +11,40 @@ import { categoryIcons } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 export default function LoreHub() {
+  const [lore, setLore] = useState<Lore | undefined>(undefined);
+  const [pages, setPages] = useState<LorePage[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [incompletePages, setIncompletePages] = useState<LorePage[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
   const { loreSlug } = useParams<{ loreSlug: string }>();
-  const lore = getLoreBySlug(loreSlug);
-  const pages = lore ? getPagesByLore(lore.id) : [];
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const fetchedLore = await getLoreBySlug(loreSlug);
+      setLore(fetchedLore);
+
+      if (fetchedLore) {
+        const fetchedPages = await getPagesByLore(fetchedLore.id);
+        setPages(fetchedPages);
+        setCategories(Array.from(new Set(fetchedPages.map((p) => p.category))));
+        setIncompletePages(fetchedPages.filter((p) => p.completeness < 70));
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, [loreSlug]);
+
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container py-16 text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!lore) {
     return (
@@ -26,9 +58,6 @@ export default function LoreHub() {
       </Layout>
     );
   }
-
-  const categories = Array.from(new Set(pages.map((p) => p.category)));
-  const incompletePages = pages.filter((p) => p.completeness < 70);
 
   return (
     <Layout>
