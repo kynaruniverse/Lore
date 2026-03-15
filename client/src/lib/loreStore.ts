@@ -8,6 +8,7 @@ import { lores as seedLores, pages as seedPages, type Lore, type LorePage, type 
 
 const LORES_KEY = "lore_user_lores";
 const PAGES_KEY = "lore_user_pages";
+const EDITED_SEED_PAGES_KEY = "lore_edited_seed_pages"; // Tracks edits to seed pages
 
 // ── Lore helpers ──────────────────────────────────────────
 
@@ -114,7 +115,9 @@ function writeUserPages(pages: LorePage[]): void {
 }
 
 export function getAllPages(): LorePage[] {
-  return [...seedPages, ...readUserPages()];
+  const editedSeedPages = readEditedSeedPages();
+  const seedPagesWithEdits = seedPages.map((p) => editedSeedPages[p.id] || p);
+  return [...seedPagesWithEdits, ...readUserPages()];
 }
 
 export function getPageById(id: string): LorePage | undefined {
@@ -140,6 +143,7 @@ export function createPage(input: {
   title: string;
   category: string;
   content: string;
+  image?: string;
   tags: string[];
   relationships: Array<{ targetPageId: string; type: RelationshipType; label?: string }>;
 }): LorePage {
@@ -168,6 +172,7 @@ export function createPage(input: {
     category: input.category,
     content: input.content,
     excerpt,
+    image: input.image,
     relationships: input.relationships,
     tags: input.tags,
     completeness: input.content.length > 200 ? 70 : 40,
@@ -214,6 +219,50 @@ export function deletePage(id: string): void {
 
 export function isUserPage(id: string): boolean {
   return readUserPages().some((p) => p.id === id);
+}
+
+// ── Edited seed pages tracking ────────────────────────
+
+function readEditedSeedPages(): Record<string, LorePage> {
+  try {
+    const raw = localStorage.getItem(EDITED_SEED_PAGES_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, LorePage>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeEditedSeedPages(pages: Record<string, LorePage>): void {
+  localStorage.setItem(EDITED_SEED_PAGES_KEY, JSON.stringify(pages));
+}
+
+export function getPageWithEdits(id: string): LorePage | undefined {
+  const editedSeedPages = readEditedSeedPages();
+  if (editedSeedPages[id]) {
+    return editedSeedPages[id];
+  }
+  return getPageById(id);
+}
+
+export function canEditPage(id: string): boolean {
+  // Can edit both user-created pages and seed pages
+  return true;
+}
+
+export function editSeedPage(id: string, updates: Partial<LorePage>): void {
+  const page = getPageById(id);
+  if (!page) return;
+
+  const editedSeedPages = readEditedSeedPages();
+  const now = new Date().toISOString().split("T")[0];
+  const updatedPage = { ...page, ...updates, updatedAt: now };
+  if (updates.content) {
+    updatedPage.excerpt =
+      updates.content.replace(/#+\s/g, "").slice(0, 160).trim() +
+      (updates.content.length > 160 ? "…" : "");
+  }
+  editedSeedPages[id] = updatedPage;
+  writeEditedSeedPages(editedSeedPages);
 }
 
 export function isUserLore(id: string): boolean {

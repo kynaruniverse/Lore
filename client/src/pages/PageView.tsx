@@ -5,7 +5,7 @@ import { useParams, Link } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowLeft, AlertCircle, ExternalLink, Eye, Calendar, Tag, Edit3 } from "lucide-react";
 import Layout from "@/components/Layout";
-import { getLoreBySlug, getPageBySlug, getRelatedPages, isUserPage } from "@/lib/loreStore";
+import { getLoreBySlug, getPageBySlug, getRelatedPages, canEditPage } from "@/lib/loreStore";
 import { relationshipLabels } from "@/lib/data";
 import KnowledgeGraph from "@/components/KnowledgeGraph";
 
@@ -14,7 +14,7 @@ export default function PageView() {
   const lore = getLoreBySlug(loreSlug);
   const page = lore ? getPageBySlug(lore.id, pageSlug) : undefined;
   const relatedPages = page ? getRelatedPages(page) : [];
-  const canEdit = page ? isUserPage(page.id) : false;
+  const canEdit = page ? canEditPage(page.id) : false;
 
   if (!lore || !page) {
     return (

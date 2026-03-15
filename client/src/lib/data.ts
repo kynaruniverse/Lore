@@ -322,7 +322,7 @@ Jane and Jesse met when she became his landlord. Their relationship developed sl
 ## Death
 
 Walter White, witnessing Jane choking on her own vomit during an overdose, chose not to intervene. Her death is widely considered the series' most morally defining moment — the point at which Walter's transformation into Heisenberg became irreversible.`,
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
     relationships: [
       { targetPageId: "bb-jesse-pinkman", type: "related_to", label: "Girlfriend" },
     ],
@@ -350,7 +350,7 @@ The White family home on Negra Arroyo Lane, the Crystal Palace strip club, the D
 ## Desert Significance
 
 The Albuquerque desert is a recurring visual motif — vast, indifferent, capable of swallowing secrets. Many of the series' most pivotal scenes take place in the desert: the first cook, the burial of money, the final confrontation.`,
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80",
     relationships: [
       { targetPageId: "bb-walter-white", type: "related_to", label: "Setting" },
       { targetPageId: "bb-jesse-pinkman", type: "related_to", label: "Setting" },
@@ -385,7 +385,7 @@ Marika held the Elden Ring within her body, making her essentially immortal and 
 ## The Shattering
 
 Following the Night of Black Knives, in which Godwyn's soul was killed, Marika shattered the Elden Ring in an act of grief or defiance. This act fractured the Golden Order and began the Shattering — a civil war among her demigod children.`,
-    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=400&q=80",
     relationships: [
       { targetPageId: "er-radagon", type: "related_to", label: "Other Self" },
       { targetPageId: "er-erdtree", type: "related_to", label: "Vessel" },
@@ -415,7 +415,7 @@ Radagon was originally a champion of the Golden Order who fought against the Car
 ## Identity
 
 The true nature of Radagon's identity as Marika's other self is one of Elden Ring's central mysteries. Whether this represents a literal metaphysical duality or a more symbolic truth is left deliberately ambiguous by FromSoftware.`,
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
     relationships: [
       { targetPageId: "er-marika", type: "related_to", label: "Other Self" },
       { targetPageId: "er-rennala", type: "related_to", label: "Former Wife" },
@@ -449,7 +449,7 @@ The Erdtree can only be burned using the Rune of Death, which was removed from t
 ## Symbolism
 
 The Erdtree represents both the beauty and the oppression of the Golden Order — a system that provides grace and meaning but also enforces rigid hierarchy and suppresses alternatives.`,
-    image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=600&q=80",
     relationships: [
       { targetPageId: "er-marika", type: "related_to", label: "Vessel" },
       { targetPageId: "er-radagon", type: "related_to", label: "Elden Lord" },
@@ -550,7 +550,7 @@ Jon was assassinated by his own men at Castle Black, only to be resurrected by t
 ## The True Heir
 
 Jon's true parentage — revealed through Bran Stark's visions — made him the legitimate heir to the Iron Throne, a revelation that complicated his relationship with Daenerys Targaryen and ultimately led to the series' tragic conclusion.`,
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
     relationships: [
       { targetPageId: "got-daenerys", type: "ally_of", label: "Queen / Aunt" },
       { targetPageId: "got-winterfell", type: "located_in", label: "Home" },
@@ -584,7 +584,7 @@ Daenerys freed the slaves of Astapor, Yunkai, and Meereen, building a loyal army
 ## The Burning of King's Landing
 
 Daenerys's decision to burn King's Landing — even after the city's surrender — remains one of the most debated moments in the series, representing either a tragic fall or a logical conclusion to her character.`,
-    image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&q=80",
     relationships: [
       { targetPageId: "got-jon-snow", type: "ally_of", label: "Nephew / Ally" },
       { targetPageId: "got-winterfell", type: "related_to", label: "Invaded" },
@@ -617,7 +617,7 @@ Winterfell was founded by Bran the Builder, the legendary founder of House Stark
 ## The Long Night
 
 Winterfell was the site of the Battle of Winterfell — the climactic confrontation between the living and the Army of the Dead, in which Arya Stark killed the Night King.`,
-    image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80",
     relationships: [
       { targetPageId: "got-jon-snow", type: "related_to", label: "Home" },
       { targetPageId: "got-daenerys", type: "related_to", label: "Battlefield" },
@@ -651,7 +651,7 @@ The Night's Watch, an ancient order of sworn brothers, has guarded the Wall sinc
 ## The Fall
 
 The Wall was ultimately destroyed by the Night King riding the reanimated Viserion, opening the way for the Army of the Dead to march south.`,
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80",
     relationships: [
       { targetPageId: "got-jon-snow", type: "related_to", label: "Served Here" },
       { targetPageId: "got-winterfell", type: "related_to", label: "Southern Connection" },
@@ -686,7 +686,7 @@ Gandalf initially bore the title Gandalf the Grey, wielding the Elven ring Narya
 ## Role in the Fellowship
 
 Gandalf was the architect of the Quest of the Ring, having spent decades investigating the One Ring and recognising its danger. He guided the Fellowship of the Ring until his apparent death in Moria.`,
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
     relationships: [
       { targetPageId: "lotr-frodo", type: "ally_of", label: "Guide" },
       { targetPageId: "lotr-shire", type: "related_to", label: "Visited" },
@@ -720,7 +720,7 @@ The Ring's corrupting influence grew heavier as Frodo neared Mordor. His relatio
 ## The Grey Havens
 
 Frodo's spiritual wounds from bearing the Ring could not be healed in Middle-earth. He was granted passage to the Undying Lands alongside Gandalf, Bilbo, and the Ring-bearers, departing from the Grey Havens.`,
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
     relationships: [
       { targetPageId: "lotr-gandalf", type: "ally_of", label: "Guide" },
       { targetPageId: "lotr-shire", type: "located_in", label: "Home" },
@@ -754,7 +754,7 @@ Hobbits are a peaceful people who value comfort, food, and community above adven
 ## The Scouring
 
 During the War of the Ring, Saruman's agents occupied and industrialised the Shire. The returning hobbits — Frodo, Sam, Merry, and Pippin — led a successful uprising known as the Scouring of the Shire, restoring it to its natural state.`,
-    image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80",
     relationships: [
       { targetPageId: "lotr-frodo", type: "related_to", label: "Home" },
       { targetPageId: "lotr-gandalf", type: "related_to", label: "Visited" },
@@ -787,7 +787,7 @@ Sauron's fortress Barad-dûr, the Dark Tower, was built using the power of the O
 ## The Destruction of the Ring
 
 Frodo and Sam's journey through Mordor, guided by Gollum, culminated at the Crack of Doom within Mount Doom. Gollum's seizure of the Ring and his fall into the fire accomplished what Frodo ultimately could not — the Ring's destruction.`,
-    image: "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80",
     relationships: [
       { targetPageId: "lotr-frodo", type: "related_to", label: "Destination" },
       { targetPageId: "lotr-gandalf", type: "enemy_of", label: "Opposed" },
@@ -822,7 +822,7 @@ The 2023 season saw Verstappen achieve the most dominant championship campaign i
 ## Driving Style
 
 Verstappen is known for his aggressive overtaking, exceptional wet-weather ability, and willingness to defend positions forcefully. His car control at the limit is widely considered exceptional even among his peers.`,
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
     relationships: [
       { targetPageId: "f1-red-bull", type: "drove_for", label: "Team" },
       { targetPageId: "f1-monaco", type: "competed_in", label: "Circuit" },
@@ -856,7 +856,7 @@ Hamilton joined Mercedes in 2013 and went on to win six of his seven championshi
 ## Ferrari Chapter
 
 In 2025, Hamilton made the surprise move to Ferrari — a partnership that captured the imagination of the entire motorsport world, pairing the sport's greatest driver with its most iconic team.`,
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
     relationships: [
       { targetPageId: "f1-red-bull", type: "enemy_of", label: "Rival Team" },
       { targetPageId: "f1-monaco", type: "competed_in", label: "Circuit" },
@@ -890,7 +890,7 @@ Red Bull's return to dominance from 2021 onwards was built around Max Verstappen
 ## Adrian Newey
 
 Adrian Newey's departure from Red Bull in 2024 marked the end of an era. His aerodynamic genius had underpinned the team's success across both dominant periods.`,
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1552820728-8ac41f1ce891?w=600&q=80",
     relationships: [
       { targetPageId: "f1-max-verstappen", type: "related_to", label: "Driver" },
       { targetPageId: "f1-lewis-hamilton", type: "enemy_of", label: "Rival" },
@@ -924,7 +924,7 @@ The Monaco Grand Prix has been held since 1929, making it one of the oldest race
 ## Overtaking
 
 Monaco is notorious for the near-impossibility of overtaking, making qualifying performance and strategy paramount. A driver who qualifies on pole position wins the race the majority of the time.`,
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80",
+    image: "https://images.unsplash.com/photo-1552820728-8ac41f1ce891?w=600&q=80",
     relationships: [
       { targetPageId: "f1-max-verstappen", type: "related_to", label: "Race Venue" },
       { targetPageId: "f1-lewis-hamilton", type: "related_to", label: "Race Venue" },

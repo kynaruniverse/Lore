@@ -1,5 +1,4 @@
-// LORE — Edit Page
-// Pre-filled editor for updating an existing knowledge page
+// Pre-filled editor for updating an existing knowledge page (seed or user-created)
 
 import { useState } from "react";
 import { useParams, Link, useLocation } from "wouter";
@@ -7,7 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Edit3, Plus, X, ChevronRight, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
-import { getLoreBySlug, getPageBySlug, updatePage, deletePage, isUserPage } from "@/lib/loreStore";
+import { getLoreBySlug, getPageBySlug, updatePage, deletePage, isUserPage, editSeedPage, canEditPage } from "@/lib/loreStore";
 import type { RelationshipType } from "@/lib/data";
 
 const PAGE_CATEGORIES = [
@@ -27,11 +26,12 @@ export default function EditPage() {
   const lore = getLoreBySlug(loreSlug);
   const page = lore ? getPageBySlug(lore.id, pageSlug) : undefined;
 
-  const canEdit = page ? isUserPage(page.id) : false;
+  const canEdit = page ? canEditPage(page.id) : false;
 
   const [title, setTitle] = useState(page?.title ?? "");
   const [category, setCategory] = useState(page?.category ?? "Character");
   const [content, setContent] = useState(page?.content ?? "");
+  const [imageUrl, setImageUrl] = useState(page?.image ?? "");
   const [tags, setTags] = useState(page?.tags.join(", ") ?? "");
   const [relationships, setRelationships] = useState<
     Array<{ targetPageId: string; type: RelationshipType; label: string }>
@@ -67,14 +67,14 @@ export default function EditPage() {
           <div className="lore-card p-8">
             <Edit3 className="w-10 h-10 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-lg font-semibold text-foreground mb-2" style={{ fontFamily: "'Lora', Georgia, serif" }}>
-              Seed Pages Are Read-Only
+              Page Not Found
             </h2>
             <p className="text-sm text-muted-foreground mb-6">
-              This page is part of the original Lore seed data and cannot be edited. Only pages you create can be modified.
+              This page does not exist.
             </p>
-            <Link href={`/lore/${loreSlug}/${pageSlug}`}>
+            <Link href={`/lore/${loreSlug}`}>
               <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
-                Back to Page
+                Back to Lore
               </button>
             </Link>
           </div>
@@ -114,13 +114,21 @@ export default function EditPage() {
         .map((t) => t.trim())
         .filter(Boolean);
 
-      updatePage(page.id, {
+      const updates = {
         title: title.trim(),
         category,
         content: content.trim(),
+        image: imageUrl.trim() || undefined,
         tags: parsedTags,
         relationships,
-      });
+      };
+
+      // Use editSeedPage for seed pages, updatePage for user-created pages
+      if (isUserPage(page.id)) {
+        updatePage(page.id, updates);
+      } else {
+        editSeedPage(page.id, updates);
+      }
 
       toast.success("Page updated successfully!");
       setTimeout(() => navigate(`/lore/${loreSlug}/${pageSlug}`), 1000);
@@ -131,6 +139,10 @@ export default function EditPage() {
   };
 
   const handleDelete = () => {
+    if (!isUserPage(page.id)) {
+      toast.error("Cannot delete seed pages");
+      return;
+    }
     deletePage(page.id);
     toast.success(`"${page.title}" has been deleted.`);
     navigate(`/lore/${loreSlug}`);
@@ -171,155 +183,158 @@ export default function EditPage() {
                   <p className="text-xs text-muted-foreground">in {lore.title}</p>
                 </div>
               </div>
-              {/* Delete button */}
-              {!showDeleteConfirm ? (
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-destructive border border-destructive/30 rounded-lg hover:bg-destructive/10 transition-colors"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Delete
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Are you sure?</span>
+              {/* Delete button - only for user-created pages */}
+              {isUserPage(page.id) && (
+                !showDeleteConfirm ? (
                   <button
                     type="button"
-                    onClick={handleDelete}
-                    className="px-3 py-1.5 text-xs bg-destructive text-white rounded-lg hover:opacity-90 transition-opacity"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-destructive border border-destructive/30 rounded-lg hover:bg-destructive/10 transition-colors"
                   >
-                    Yes, delete
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="px-3 py-1.5 text-xs border border-border rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Are you sure?</span>
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      className="px-3 py-1.5 text-xs bg-destructive text-white rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Yes, delete
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="px-3 py-1.5 text-xs border border-border rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )
               )}
             </div>
-            <p className="text-sm text-muted-foreground mb-8">
-              Update the content and relationships for this page.
-            </p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Title */}
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Title *
+                <label className="text-xs font-semibold text-muted-foreground mb-2 block">
+                  Title <span className="text-destructive">*</span>
                 </label>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"
-                  style={{ fontFamily: "'Lora', Georgia, serif" }}
+                  placeholder="Page title…"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
 
               {/* Category */}
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Category
-                </label>
-                <div className="flex flex-wrap gap-2">
+                <label className="text-xs font-semibold text-muted-foreground mb-2 block">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+                >
                   {PAGE_CATEGORIES.map((cat) => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onClick={() => setCategory(cat)}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                        category === cat
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-surface text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                      }`}
-                    >
+                    <option key={cat} value={cat}>
                       {cat}
-                    </button>
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
 
               {/* Content */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Content
-                  </label>
+                  <label className="text-xs font-semibold text-muted-foreground">Content</label>
                   <span className="text-xs text-muted-foreground">{wordCount} words</span>
                 </div>
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  rows={10}
-                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all resize-none leading-relaxed"
-                  style={{ fontFamily: "'Lora', Georgia, serif" }}
+                  placeholder="Start writing… Use ## for headings, **bold** for emphasis."
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono text-sm resize-none"
+                  rows={12}
+                />
+                <p className="text-xs text-muted-foreground mt-2">Supports Markdown: ## Heading, **bold**, *italic*, &gt; blockquote</p>
+              </div>
+
+              {/* Image URL */}
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground mb-2 block">Image URL (optional)</label>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/... or any public image URL"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  Supports Markdown: ## Heading, **bold**, *italic*, &gt; blockquote
+                  Paste a URL from Unsplash, Pexels, Wikimedia, or any public image source.
                 </p>
               </div>
 
               {/* Tags */}
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Tags <span className="text-muted-foreground font-normal normal-case">(comma separated)</span>
-                </label>
+                <label className="text-xs font-semibold text-muted-foreground mb-2 block">Tags (comma separated)</label>
                 <input
                   type="text"
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
-                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"
+                  placeholder="e.g. Protagonist, Chemistry, Albuquerque"
+                  className="w-full px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
               </div>
 
               {/* Relationships */}
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  Relationships
+                <label className="text-xs font-semibold text-muted-foreground mb-2 block">
+                  Relationships (link to existing pages)
                 </label>
-                {relationships.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {relationships.map((rel, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 border border-primary/20 rounded-lg text-xs text-primary"
-                      >
-                        <span>{rel.label}</span>
-                        <span className="text-primary/60">·</span>
-                        <span className="text-primary/70">{rel.type.replace(/_/g, " ")}</span>
-                        <button type="button" onClick={() => removeRelationship(i)} className="ml-1 hover:text-destructive">
-                          <X className="w-3 h-3" />
-                        </button>
+                <div className="space-y-2 mb-3">
+                  {relationships.map((rel, i) => (
+                    <div key={i} className="flex items-center justify-between px-3 py-2 bg-surface border border-border rounded-lg">
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-foreground">{rel.label}</p>
+                        <p className="text-xs text-muted-foreground">{rel.type}</p>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <button
+                        type="button"
+                        onClick={() => removeRelationship(i)}
+                        className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={newRelTitle}
                     onChange={(e) => setNewRelTitle(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addRelationship())}
                     placeholder="Page title…"
-                    className="flex-1 px-3 py-2 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60 transition-all"
+                    className="flex-1 px-3 py-2 bg-surface border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
                   />
                   <select
                     value={newRelType}
                     onChange={(e) => setNewRelType(e.target.value as RelationshipType)}
-                    className="px-3 py-2 bg-surface border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary/60 transition-all"
+                    className="px-3 py-2 bg-surface border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
                   >
-                    {RELATIONSHIP_TYPES.map((t) => (
-                      <option key={t} value={t}>{t.replace(/_/g, " ")}</option>
+                    {RELATIONSHIP_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
                     ))}
                   </select>
                   <button
                     type="button"
                     onClick={addRelationship}
-                    className="p-2 bg-surface border border-border rounded-lg text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                    className="px-3 py-2 bg-primary/15 text-primary rounded-lg hover:bg-primary/25 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
@@ -330,10 +345,10 @@ export default function EditPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity ember-glow disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
               >
-                {isSubmitting ? "Saving…" : "Save Changes"}
                 <ChevronRight className="w-4 h-4" />
+                Save Changes
               </button>
             </form>
           </motion.div>

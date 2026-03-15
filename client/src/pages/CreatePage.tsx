@@ -29,6 +29,7 @@ export default function CreatePage() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Character");
   const [content, setContent] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [tags, setTags] = useState("");
   const [relationships, setRelationships] = useState<Array<{ targetPageId: string; type: RelationshipType; label: string }>>([]);
   const [newRelTitle, setNewRelTitle] = useState("");
@@ -88,6 +89,7 @@ export default function CreatePage() {
         title: title.trim(),
         category,
         content: content.trim(),
+        image: imageUrl.trim() || undefined,
         tags: parsedTags,
         relationships,
       });
@@ -198,6 +200,23 @@ export default function CreatePage() {
                 />
                 <p className="text-xs text-muted-foreground mt-1.5">
                   Supports Markdown: ## Heading, **bold**, *italic*, &gt; blockquote
+                </p>
+              </div>
+
+              {/* Image URL */}
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  Image URL <span className="text-muted-foreground font-normal normal-case">(optional)</span>
+                </label>
+                <input
+                  type="url"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/... or any public image URL"
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/30 transition-all"
+                />
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Paste a URL from Unsplash, Pexels, Wikimedia, or any public image source.
                 </p>
               </div>
 
