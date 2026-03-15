@@ -1,0 +1,327 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   LORE — "Ember Archive" Design System
+   Dark warm charcoal + burnt orange ember accent
+   Fonts: Lora (serif headings/body), Inter (UI)
+   ============================================================ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  
+  /* Lore custom tokens */
+  --color-ember: var(--ember);
+  --color-ember-hover: var(--ember-hover);
+  --color-ember-muted: var(--ember-muted);
+  --color-amber-tag: var(--amber-tag);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+}
+
+/* Dark theme (default for Lore) */
+:root {
+  --radius: 0.5rem;
+  
+  /* Ember accent */
+  --ember: oklch(0.62 0.18 42);
+  --ember-hover: oklch(0.68 0.20 42);
+  --ember-muted: oklch(0.62 0.18 42 / 15%);
+  --amber-tag: oklch(0.72 0.12 75);
+  
+  /* Backgrounds */
+  --background: oklch(0.12 0.012 45);
+  --surface: oklch(0.17 0.014 45);
+  --surface-elevated: oklch(0.22 0.016 45);
+  
+  /* Semantic */
+  --foreground: oklch(0.93 0.01 65);
+  --card: oklch(0.17 0.014 45);
+  --card-foreground: oklch(0.93 0.01 65);
+  --popover: oklch(0.22 0.016 45);
+  --popover-foreground: oklch(0.93 0.01 65);
+  --primary: oklch(0.62 0.18 42);
+  --primary-foreground: oklch(0.98 0.005 65);
+  --secondary: oklch(0.22 0.016 45);
+  --secondary-foreground: oklch(0.80 0.01 65);
+  --muted: oklch(0.20 0.014 45);
+  --muted-foreground: oklch(0.55 0.015 65);
+  --accent: oklch(0.22 0.016 45);
+  --accent-foreground: oklch(0.93 0.01 65);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.28 0.012 45);
+  --input: oklch(0.22 0.016 45);
+  --ring: oklch(0.62 0.18 42);
+  
+  /* Charts */
+  --chart-1: oklch(0.62 0.18 42);
+  --chart-2: oklch(0.72 0.12 75);
+  --chart-3: oklch(0.55 0.15 42);
+  --chart-4: oklch(0.45 0.12 42);
+  --chart-5: oklch(0.35 0.08 42);
+  
+  /* Sidebar */
+  --sidebar: oklch(0.14 0.013 45);
+  --sidebar-foreground: oklch(0.93 0.01 65);
+  --sidebar-primary: oklch(0.62 0.18 42);
+  --sidebar-primary-foreground: oklch(0.98 0.005 65);
+  --sidebar-accent: oklch(0.20 0.014 45);
+  --sidebar-accent-foreground: oklch(0.93 0.01 65);
+  --sidebar-border: oklch(0.22 0.012 45);
+  --sidebar-ring: oklch(0.62 0.18 42);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Lora', Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+      max-width: 1280px;
+    }
+  }
+  
+  /* Ember glow effect */
+  .ember-glow {
+    box-shadow: 0 0 20px oklch(0.62 0.18 42 / 30%), 0 0 60px oklch(0.62 0.18 42 / 10%);
+  }
+  
+  .ember-glow-text {
+    text-shadow: 0 0 20px oklch(0.62 0.18 42 / 50%);
+  }
+  
+  /* Lore card style */
+  .lore-card {
+    background: oklch(0.17 0.014 45);
+    border: 1px solid oklch(0.28 0.012 45);
+    border-radius: 0.75rem;
+    transition: all 0.2s ease;
+  }
+  
+  .lore-card:hover {
+    border-color: oklch(0.62 0.18 42 / 40%);
+    box-shadow: 0 4px 24px oklch(0.62 0.18 42 / 10%);
+    transform: translateY(-1px);
+  }
+  
+  /* Tag chip */
+  .lore-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: oklch(0.72 0.12 75 / 15%);
+    color: oklch(0.72 0.12 75);
+    border: 1px solid oklch(0.72 0.12 75 / 25%);
+  }
+  
+  .lore-tag-ember {
+    background: oklch(0.62 0.18 42 / 15%);
+    color: oklch(0.75 0.16 42);
+    border-color: oklch(0.62 0.18 42 / 25%);
+  }
+  
+  /* Reading column */
+  .reading-column {
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  /* Relationship line */
+  .relation-line {
+    height: 1px;
+    background: linear-gradient(to right, transparent, oklch(0.62 0.18 42 / 40%), transparent);
+  }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: oklch(0.14 0.013 45);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.30 0.015 45);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.62 0.18 42 / 60%);
+  }
+  
+  /* Page enter animation */
+  @keyframes page-enter {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .page-enter {
+    animation: page-enter 0.3s ease-out forwards;
+  }
+  
+  /* Ember pulse */
+  @keyframes ember-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  
+  .ember-pulse {
+    animation: ember-pulse 2s ease-in-out infinite;
+  }
+  
+  /* Shimmer loading */
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      oklch(0.17 0.014 45) 25%,
+      oklch(0.22 0.016 45) 50%,
+      oklch(0.17 0.014 45) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  /* Knowledge gap highlight */
+  .gap-highlight {
+    border-left: 3px solid oklch(0.62 0.18 42);
+    padding-left: 0.75rem;
+    background: oklch(0.62 0.18 42 / 5%);
+    border-radius: 0 0.25rem 0.25rem 0;
+  }
+  
+  /* Bottom nav safe area */
+  .bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  /* Prose styles for page content */
+  .lore-prose {
+    font-family: 'Lora', Georgia, serif;
+    font-size: 1rem;
+    line-height: 1.8;
+    color: oklch(0.85 0.01 65);
+  }
+  
+  .lore-prose h1 { font-size: 2rem; margin-bottom: 1rem; color: oklch(0.93 0.01 65); }
+  .lore-prose h2 { font-size: 1.5rem; margin-top: 2rem; margin-bottom: 0.75rem; color: oklch(0.90 0.01 65); }
+  .lore-prose h3 { font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: oklch(0.88 0.01 65); }
+  .lore-prose p { margin-bottom: 1rem; }
+  .lore-prose a { color: oklch(0.75 0.16 42); text-decoration: underline; text-underline-offset: 3px; }
+  .lore-prose strong { color: oklch(0.93 0.01 65); font-weight: 700; }
+  .lore-prose blockquote {
+    border-left: 3px solid oklch(0.62 0.18 42);
+    padding-left: 1rem;
+    margin-left: 0;
+    color: oklch(0.65 0.015 65);
+    font-style: italic;
+  }
+}
