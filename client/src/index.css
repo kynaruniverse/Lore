@@ -58,6 +58,7 @@
 
 /* Dark theme (default for Lore) */
 :root {
+  color-scheme: dark;
   --radius: 0.5rem;
   
   /* Ember accent */
@@ -107,6 +108,60 @@
   --sidebar-accent-foreground: oklch(0.93 0.01 65);
   --sidebar-border: oklch(0.22 0.012 45);
   --sidebar-ring: oklch(0.62 0.18 42);
+}
+
+/* Light theme */
+:root:not(.dark) {
+  color-scheme: light;
+  --radius: 0.5rem;
+
+  /* Ember accent — slightly deeper for light bg */
+  --ember: oklch(0.55 0.18 42);
+  --ember-hover: oklch(0.60 0.20 42);
+  --ember-muted: oklch(0.55 0.18 42 / 12%);
+  --amber-tag: oklch(0.60 0.14 75);
+
+  /* Backgrounds */
+  --background: oklch(0.98 0.004 65);
+  --surface: oklch(0.96 0.005 65);
+  --surface-elevated: oklch(0.93 0.006 65);
+
+  /* Semantic */
+  --foreground: oklch(0.18 0.012 45);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.012 45);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.012 45);
+  --primary: oklch(0.55 0.18 42);
+  --primary-foreground: oklch(0.98 0.005 65);
+  --secondary: oklch(0.93 0.006 65);
+  --secondary-foreground: oklch(0.30 0.012 45);
+  --muted: oklch(0.94 0.005 65);
+  --muted-foreground: oklch(0.50 0.015 65);
+  --accent: oklch(0.93 0.006 65);
+  --accent-foreground: oklch(0.18 0.012 45);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.88 0.008 65);
+  --input: oklch(0.93 0.006 65);
+  --ring: oklch(0.55 0.18 42);
+
+  /* Charts */
+  --chart-1: oklch(0.55 0.18 42);
+  --chart-2: oklch(0.60 0.14 75);
+  --chart-3: oklch(0.48 0.15 42);
+  --chart-4: oklch(0.40 0.12 42);
+  --chart-5: oklch(0.35 0.08 42);
+
+  /* Sidebar */
+  --sidebar: oklch(0.96 0.005 65);
+  --sidebar-foreground: oklch(0.18 0.012 45);
+  --sidebar-primary: oklch(0.55 0.18 42);
+  --sidebar-primary-foreground: oklch(0.98 0.005 65);
+  --sidebar-accent: oklch(0.93 0.006 65);
+  --sidebar-accent-foreground: oklch(0.18 0.012 45);
+  --sidebar-border: oklch(0.88 0.008 65);
+  --sidebar-ring: oklch(0.55 0.18 42);
 }
 
 @layer base {
@@ -184,15 +239,15 @@
   
   /* Lore card style */
   .lore-card {
-    background: oklch(0.17 0.014 45);
-    border: 1px solid oklch(0.28 0.012 45);
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 0.75rem;
     transition: all 0.2s ease;
   }
   
   .lore-card:hover {
-    border-color: oklch(0.62 0.18 42 / 40%);
-    box-shadow: 0 4px 24px oklch(0.62 0.18 42 / 10%);
+    border-color: oklch(from var(--primary) l c h / 40%);
+    box-shadow: 0 4px 24px oklch(from var(--primary) l c h / 10%);
     transform: translateY(-1px);
   }
   
@@ -237,14 +292,14 @@
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: oklch(0.14 0.013 45);
+    background: var(--background);
   }
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.30 0.015 45);
+    background: var(--border);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.62 0.18 42 / 60%);
+    background: var(--primary);
   }
   
   /* Page enter animation */
@@ -282,9 +337,9 @@
   .shimmer {
     background: linear-gradient(
       90deg,
-      oklch(0.17 0.014 45) 25%,
-      oklch(0.22 0.016 45) 50%,
-      oklch(0.17 0.014 45) 75%
+      var(--surface) 25%,
+      var(--surface-elevated) 50%,
+      var(--surface) 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
@@ -308,20 +363,20 @@
     font-family: 'Lora', Georgia, serif;
     font-size: 1rem;
     line-height: 1.8;
-    color: oklch(0.85 0.01 65);
+    color: var(--foreground);
   }
   
-  .lore-prose h1 { font-size: 2rem; margin-bottom: 1rem; color: oklch(0.93 0.01 65); }
-  .lore-prose h2 { font-size: 1.5rem; margin-top: 2rem; margin-bottom: 0.75rem; color: oklch(0.90 0.01 65); }
-  .lore-prose h3 { font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: oklch(0.88 0.01 65); }
+  .lore-prose h1 { font-size: 2rem; margin-bottom: 1rem; color: var(--foreground); }
+  .lore-prose h2 { font-size: 1.5rem; margin-top: 2rem; margin-bottom: 0.75rem; color: var(--foreground); }
+  .lore-prose h3 { font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--foreground); }
   .lore-prose p { margin-bottom: 1rem; }
-  .lore-prose a { color: oklch(0.75 0.16 42); text-decoration: underline; text-underline-offset: 3px; }
-  .lore-prose strong { color: oklch(0.93 0.01 65); font-weight: 700; }
+  .lore-prose a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
+  .lore-prose strong { color: var(--foreground); font-weight: 700; }
   .lore-prose blockquote {
-    border-left: 3px solid oklch(0.62 0.18 42);
+    border-left: 3px solid var(--primary);
     padding-left: 1rem;
     margin-left: 0;
-    color: oklch(0.65 0.015 65);
+    color: var(--muted-foreground);
     font-style: italic;
   }
 }

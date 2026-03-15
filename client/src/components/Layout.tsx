@@ -3,8 +3,9 @@
 // Mobile: bottom navigation bar | Desktop: left sidebar
 
 import { Link, useLocation } from "wouter";
-import { Home, Search, PlusCircle, BookOpen, Flame } from "lucide-react";
+import { Home, Search, PlusCircle, BookOpen, Flame, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ const navItems = [
 
 export default function Layout({ children }: LayoutProps) {
   const [location] = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -60,8 +62,27 @@ export default function Layout({ children }: LayoutProps) {
           })}
         </nav>
 
-        {/* Footer */}
-        <div className="px-4 py-4 border-t border-border">
+        {/* Footer with theme toggle */}
+        <div className="px-4 py-4 border-t border-border space-y-3">
+          {toggleTheme && (
+            <button
+              onClick={toggleTheme}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-150"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? (
+                <>
+                  <Sun className="w-4 h-4 shrink-0" />
+                  Light Mode
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 shrink-0" />
+                  Dark Mode
+                </>
+              )}
+            </button>
+          )}
           <p className="text-xs text-muted-foreground">
             Community knowledge, beautifully organised.
           </p>
@@ -86,11 +107,22 @@ export default function Layout({ children }: LayoutProps) {
                 </span>
               </div>
             </Link>
-            <Link href="/search">
-              <button className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-                <Search className="w-5 h-5" />
-              </button>
-            </Link>
+            <div className="flex items-center gap-1">
+              {toggleTheme && (
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                  aria-label="Toggle theme"
+                >
+                  {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+              )}
+              <Link href="/search">
+                <button className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+                  <Search className="w-5 h-5" />
+                </button>
+              </Link>
+            </div>
           </div>
         </header>
 
@@ -112,7 +144,7 @@ export default function Layout({ children }: LayoutProps) {
                   )}
                 >
                   <item.icon
-                    className={cn("w-5 h-5 transition-all", active && "drop-shadow-[0_0_6px_oklch(0.62_0.18_42)]")}
+                    className={cn("w-5 h-5 transition-all", active && "drop-shadow-[0_0_6px_var(--primary)]")}
                   />
                   <span className="text-[10px] font-medium">{item.label}</span>
                 </div>

@@ -7,9 +7,10 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Flame, Globe, Lock, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import Layout from "@/components/Layout";
-import { categoryIcons } from "@/lib/data";
+import { createLore } from "@/lib/loreStore";
+import type { Lore } from "@/lib/data";
 
-const CATEGORIES = [
+const CATEGORIES: { id: Lore["category"]; label: string; icon: string }[] = [
   { id: "tv", label: "TV Show", icon: "📺" },
   { id: "game", label: "Game", icon: "🎮" },
   { id: "film", label: "Film", icon: "🎬" },
@@ -23,20 +24,45 @@ export default function CreateLore() {
   const [, navigate] = useLocation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<Lore["category"] | "">("");
   const [isPublic, setIsPublic] = useState(true);
   const [tags, setTags] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !category) {
-      toast.error("Please fill in the title and select a category.");
+    if (!title.trim()) {
+      toast.error("Please enter a title for your Lore.");
       return;
     }
-    toast.success(`"${title}" Lore created! (Demo — connect Supabase to persist data)`, {
-      description: "Your knowledge space is ready. Start adding pages!",
-    });
-    setTimeout(() => navigate("/"), 1500);
+    if (!category) {
+      toast.error("Please select a category.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const parsedTags = tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      const newLore = createLore({
+        title: title.trim(),
+        description: description.trim(),
+        category: category as Lore["category"],
+        tags: parsedTags,
+        isPublic,
+      });
+
+      toast.success(`"${newLore.title}" Lore created!`, {
+        description: "Your knowledge space is ready. Start adding pages!",
+      });
+      setTimeout(() => navigate(`/lore/${newLore.slug}`), 1200);
+    } catch (err) {
+      toast.error("Something went wrong. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -176,9 +202,10 @@ export default function CreateLore() {
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-[oklch(0.68_0.20_42)] transition-colors ember-glow"
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition-opacity ember-glow disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Create Lore
+                {isSubmitting ? "Creating…" : "Create Lore"}
                 <ChevronRight className="w-4 h-4" />
               </button>
             </form>

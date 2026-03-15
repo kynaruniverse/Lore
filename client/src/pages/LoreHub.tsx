@@ -5,7 +5,8 @@ import { useParams, Link } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowLeft, Plus, FileText, Users, Eye, AlertCircle, ArrowRight, TrendingUp, Network } from "lucide-react";
 import Layout from "@/components/Layout";
-import { getLoreBySlug, getPagesByLore, categoryIcons } from "@/lib/data";
+import { getLoreBySlug, getPagesByLore } from "@/lib/loreStore";
+import { categoryIcons } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 export default function LoreHub() {

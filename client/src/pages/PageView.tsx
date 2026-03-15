@@ -3,9 +3,10 @@
 
 import { useParams, Link } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft, AlertCircle, ExternalLink, Eye, Calendar, Tag } from "lucide-react";
+import { ArrowLeft, AlertCircle, ExternalLink, Eye, Calendar, Tag, Edit3 } from "lucide-react";
 import Layout from "@/components/Layout";
-import { getLoreBySlug, getPageBySlug, getRelatedPages, relationshipLabels } from "@/lib/data";
+import { getLoreBySlug, getPageBySlug, getRelatedPages, isUserPage } from "@/lib/loreStore";
+import { relationshipLabels } from "@/lib/data";
 import KnowledgeGraph from "@/components/KnowledgeGraph";
 
 export default function PageView() {
@@ -13,6 +14,7 @@ export default function PageView() {
   const lore = getLoreBySlug(loreSlug);
   const page = lore ? getPageBySlug(lore.id, pageSlug) : undefined;
   const relatedPages = page ? getRelatedPages(page) : [];
+  const canEdit = page ? isUserPage(page.id) : false;
 
   if (!lore || !page) {
     return (
@@ -53,13 +55,23 @@ export default function PageView() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 max-w-5xl">
             {/* Main content */}
             <div>
-              {/* Back */}
-              <Link href={`/lore/${lore.slug}`}>
-                <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-6">
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  {lore.title}
-                </button>
-              </Link>
+              {/* Back + Edit */}
+              <div className="flex items-center justify-between mb-6">
+                <Link href={`/lore/${lore.slug}`}>
+                  <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    {lore.title}
+                  </button>
+                </Link>
+                {canEdit && (
+                  <Link href={`/lore/${loreSlug}/${pageSlug}/edit`}>
+                    <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors">
+                      <Edit3 className="w-3.5 h-3.5" />
+                      Edit
+                    </button>
+                  </Link>
+                )}
+              </div>
 
               {/* Header */}
               <motion.div

@@ -6,15 +6,17 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowRight, TrendingUp, Clock, Flame, Users, FileText } from "lucide-react";
 import Layout from "@/components/Layout";
-import { lores, getRecentPages, categoryIcons } from "@/lib/data";
+import { getAllLores, getRecentPages, getTrendingLores } from "@/lib/loreStore";
+import { categoryIcons } from "@/lib/data";
+import type { Lore } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663439820849/SE9XUZepF7G4m63nARXJEu/lore-hero-bg_f40508ff.jpg";
 
 export default function Home() {
   const recentPages = getRecentPages(6);
-  const trendingLores = lores.filter((l) => l.trending);
-  const allLores = lores;
+  const trendingLores = getTrendingLores();
+  const allLores = getAllLores();
 
   return (
     <Layout>
@@ -145,7 +147,7 @@ export default function Home() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {recentPages.map((page, i) => {
-                const lore = lores.find((l) => l.id === page.loreId);
+                const lore = allLores.find((l) => l.id === page.loreId);
                 return (
                   <motion.div
                     key={page.id}
@@ -180,7 +182,7 @@ export default function Home() {
   );
 }
 
-function LoreCard({ lore, index }: { lore: (typeof lores)[0]; index: number }) {
+function LoreCard({ lore, index }: { lore: Lore; index: number }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
