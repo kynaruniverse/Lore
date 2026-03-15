@@ -1,8 +1,4 @@
 {
   "buildCommand": "pnpm build",
-  "outputDirectory": "dist/public",
-  "env": {
-    "VITE_ANALYTICS_ENDPOINT": "@vite_analytics_endpoint",
-    "VITE_ANALYTICS_WEBSITE_ID": "@vite_analytics_website_id"
-  }
+  "outputDirectory": "dist/public"
 }
