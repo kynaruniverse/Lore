@@ -472,6 +472,36 @@ Track these metrics:
 
 ---
 
+## Routing and Page Refreshes
+
+The Lore project is a Single Page Application (SPA). To ensure that refreshing the browser on a sub-page (e.g., `/lore/breaking-bad`) doesn't result in a 404 error, both the development and production servers are configured with "catch-all" routing.
+
+### Development (Vite)
+
+The `vite.config.ts` includes a `vitePluginSpaFallback` plugin. This middleware intercepts requests that don't match a physical file or an API route and serves `index.html` instead.
+
+### Production (Express)
+
+The `server/index.ts` file handles this using Express:
+
+```typescript
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(staticPath, "index.html"));
+});
+```
+
+### Vercel Deployment
+
+The `vercel.json` file is configured to handle the build and output directory. Vercel automatically handles SPA routing if the `outputDirectory` contains an `index.html` and the project is detected as a Vite/React app. If you encounter issues on Vercel, you can add a `rewrites` section to `vercel.json`:
+
+```json
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+```
+
+---
+
 ## Troubleshooting
 
 ### Images Not Loading

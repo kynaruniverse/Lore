@@ -69,6 +69,31 @@ function writeToLogFile(source: LogSource, entries: unknown[]) {
 }
 
 /**
+ * Vite plugin for SPA routing fallback
+ * - Serves index.html for all non-file routes (client-side routing)
+ * - Allows page refresh on any route without 404 errors
+ */
+function vitePluginSpaFallback(): Plugin {
+  return {
+    name: "spa-fallback",
+    configureServer(server: ViteDevServer) {
+      return () => {
+        server.middlewares.use((req, res, next) => {
+          // Skip API routes and static files
+          if (req.url?.startsWith("/api") || req.url?.includes(".")) {
+            return next();
+          }
+
+          // For all other routes, serve index.html
+          const indexPath = path.resolve(import.meta.dirname, "client", "index.html");
+          res.end(fs.readFileSync(indexPath, "utf-8"));
+        });
+      };
+    },
+  };
+}
+
+/**
  * Vite plugin to collect browser debug logs
  * - POST /__manus__/logs: Browser sends logs, written directly to files
  * - Files: browserConsole.log, networkRequests.log, sessionReplay.log
@@ -150,7 +175,7 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginSpaFallback(), vitePluginManusDebugCollector()];
 
 export default defineConfig({
   plugins,
