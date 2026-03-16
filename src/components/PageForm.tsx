@@ -101,7 +101,7 @@ export default function PageForm({
 
       const tagArray = tags
         .split(',')
-        .map(t => t.trim())
+        .map((t: string) => t.trim())
         .filter(Boolean)
 
       const pageData = {

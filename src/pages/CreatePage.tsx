@@ -30,7 +30,7 @@ export default function CreatePage() {
       const { data: loreData } = await supabase
         .from('lores')
         .select('id, title, slug')
-        .eq('slug', loreSlug)
+        .eq('slug', loreSlug || '')
         .single()
 
       if (loreData) {

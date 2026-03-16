@@ -52,13 +52,13 @@ export default function Search() {
             excerpt,
             category,
             lore_id,
-            lores!inner (
+            lores:lores!inner (
               slug,
               title
             )
           `)
           .or(`title.ilike.${searchTerm},content.ilike.${searchTerm},excerpt.ilike.${searchTerm}`)
-          .limit(10)
+          .limit(10) as any
 
         // Search lores
         const { data: lores } = await supabase
@@ -77,7 +77,7 @@ export default function Search() {
             type: 'lore' as const,
             cover_image: lore.cover_image_url
           })) || []),
-          ...(pages?.map(page => ({
+          ...(pages?.map((page: any) => ({
             id: page.id,
             title: page.title,
             slug: page.slug,
@@ -85,8 +85,8 @@ export default function Search() {
             category: page.category,
             type: 'page' as const,
             lore_id: page.lore_id,
-            lore_slug: page.lores.slug,
-            lore_title: page.lores.title
+            lore_slug: (page.lores as any).slug,
+            lore_title: (page.lores as any).title
           })) || [])
         ]
 

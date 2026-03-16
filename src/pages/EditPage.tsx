@@ -26,7 +26,7 @@ export default function EditPage() {
       const { data: loreData } = await supabase
         .from('lores')
         .select('id, title, slug')
-        .eq('slug', loreSlug)
+        .eq('slug', loreSlug || '')
         .single()
 
       if (!loreData) return
@@ -36,7 +36,7 @@ export default function EditPage() {
         .from('pages')
         .select('*')
         .eq('lore_id', loreData.id)
-        .eq('slug', pageSlug)
+        .eq('slug', pageSlug || '')
         .single()
 
       if (!pageData) return

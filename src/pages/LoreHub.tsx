@@ -55,7 +55,7 @@ export default function LoreHub() {
       const { data: loreData, error: loreError } = await supabase
         .from('lores')
         .select('*')
-        .eq('slug', loreSlug)
+        .eq('slug', loreSlug || '')
         .single()
 
       if (loreError) throw loreError

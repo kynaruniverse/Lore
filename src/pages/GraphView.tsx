@@ -28,6 +28,10 @@ const CATEGORY_COLORS: Record<string, string> = {
   Event: '#8B5E3C',
   Item: '#B8922A',
   Organisation: '#4A7C59',
+  Concept: '#9333EA',
+  Timeline: '#0891B2',
+  Episode: '#E11D48',
+  Season: '#4F46E5',
   default: '#6B7280'
 }
 
@@ -39,8 +43,12 @@ export default function GraphView() {
   const [edges, setEdges] = useState<Edge[]>([])
   const [loading, setLoading] = useState(true)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
+  const [draggedNode, setDraggedNode] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
   const animationRef = useRef<number>(0)
+  const isDraggingCanvas = useRef(false)
+  const lastMousePos = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
     if (loreSlug) {
@@ -54,7 +62,7 @@ export default function GraphView() {
       const { data: loreData } = await supabase
         .from('lores')
         .select('*')
-        .eq('slug', loreSlug)
+        .eq('slug', loreSlug || '')
         .single()
 
       if (!loreData) return
@@ -95,7 +103,12 @@ export default function GraphView() {
       })
 
       setNodes(initialNodes)
-      setEdges(relationships || [])
+      setEdges((relationships || []).map((r: any) => ({
+        source: r.source_page_id,
+        target: r.target_page_id,
+        type: r.type,
+        label: r.label
+      })))
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -119,7 +132,7 @@ export default function GraphView() {
             const dx = newNodes[j].x - newNodes[i].x
             const dy = newNodes[j].y - newNodes[i].y
             const dist = Math.sqrt(dx * dx + dy * dy) || 1
-            const force = 5000 / (dist * dist)
+            const force = 8000 / (dist * dist)
             
             const fx = (dx / dist) * force
             const fy = (dy / dist) * force
@@ -128,6 +141,26 @@ export default function GraphView() {
             newNodes[i].vy -= fy
             newNodes[j].vx += fx
             newNodes[j].vy += fy
+          }
+        }
+
+        // Attraction between connected nodes
+        for (const edge of edges) {
+          const source = newNodes.find(n => n.id === edge.source)
+          const target = newNodes.find(n => n.id === edge.target)
+          if (source && target) {
+            const dx = target.x - source.x
+            const dy = target.y - source.y
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1
+            const force = (dist - 150) * 0.02
+            
+            const fx = (dx / dist) * force
+            const fy = (dy / dist) * force
+            
+            source.vx += fx
+            source.vy += fy
+            target.vx -= fx
+            target.vy -= fy
           }
         }
 
@@ -141,14 +174,22 @@ export default function GraphView() {
 
         // Apply velocities and dampening
         for (const node of newNodes) {
-          node.vx *= 0.95
-          node.vy *= 0.95
+          if (node.id === draggedNode) {
+            node.vx = 0
+            node.vy = 0
+            continue
+          }
+          node.vx *= 0.9
+          node.vy *= 0.9
           node.x += node.vx
           node.y += node.vy
 
-          // Keep within bounds
-          node.x = Math.max(50, Math.min(750, node.x))
-          node.y = Math.max(50, Math.min(550, node.y))
+          // Keep within soft bounds
+          const margin = 100
+          if (node.x < -margin) node.vx += 2
+          if (node.x > 800 + margin) node.vx -= 2
+          if (node.y < -margin) node.vy += 2
+          if (node.y > 600 + margin) node.vy -= 2
         }
 
         return newNodes
@@ -174,18 +215,22 @@ export default function GraphView() {
     if (!ctx) return
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+    
+    ctx.save()
+    ctx.translate(offset.x, offset.y)
+    ctx.scale(zoom, zoom)
 
     // Draw edges
-    ctx.lineWidth = 1
+    ctx.lineWidth = 1.5
     for (const edge of edges) {
       const source = nodes.find(n => n.id === edge.source)
       const target = nodes.find(n => n.id === edge.target)
       
       if (source && target) {
         const isHovered = hoveredNode === source.id || hoveredNode === target.id
-        ctx.strokeStyle = isHovered ? '#C4622D' : '#374151'
-        ctx.globalAlpha = isHovered ? 0.8 : 0.3
-        ctx.setLineDash(isHovered ? [] : [4, 4])
+        ctx.strokeStyle = isHovered ? '#C4622D' : '#4B5563'
+        ctx.globalAlpha = isHovered ? 0.9 : 0.4
+        ctx.setLineDash(isHovered ? [] : [5, 5])
         
         ctx.beginPath()
         ctx.moveTo(source.x, source.y)
@@ -199,81 +244,122 @@ export default function GraphView() {
     for (const node of nodes) {
       const color = CATEGORY_COLORS[node.category] || CATEGORY_COLORS.default
       const isHovered = hoveredNode === node.id
+      const isDragged = draggedNode === node.id
       
-      // Glow effect for hovered nodes
-      if (isHovered) {
+      if (isHovered || isDragged) {
         ctx.shadowColor = color
-        ctx.shadowBlur = 15
+        ctx.shadowBlur = 20
       } else {
         ctx.shadowBlur = 0
       }
 
-      // Draw circle
       ctx.beginPath()
-      ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI)
+      ctx.arc(node.x, node.y, node.radius * (isHovered ? 1.2 : 1), 0, 2 * Math.PI)
       ctx.fillStyle = color
-      ctx.globalAlpha = isHovered ? 1 : 0.7
+      ctx.globalAlpha = isHovered || isDragged ? 1 : 0.8
       ctx.fill()
       ctx.strokeStyle = '#FFFFFF'
-      ctx.lineWidth = 2
+      ctx.lineWidth = isHovered ? 3 : 2
       ctx.stroke()
 
-      // Reset shadow
       ctx.shadowBlur = 0
-
-      // Draw label
-      ctx.font = '12px Inter, sans-serif'
+      ctx.font = `bold ${isHovered ? '14px' : '12px'} Inter, sans-serif`
       ctx.fillStyle = '#FFFFFF'
       ctx.globalAlpha = 1
       ctx.textAlign = 'center'
       ctx.fillText(
-        node.title.length > 15 ? node.title.slice(0, 12) + '...' : node.title,
+        node.title,
         node.x,
-        node.y + node.radius + 18
+        node.y + node.radius + (isHovered ? 22 : 18)
       )
 
-      // Draw category indicator
       ctx.font = '10px Inter, sans-serif'
       ctx.fillStyle = '#9CA3AF'
       ctx.fillText(
-        node.category,
+        node.category.toUpperCase(),
         node.x,
-        node.y - node.radius - 8
+        node.y - node.radius - (isHovered ? 12 : 8)
       )
     }
-  }, [nodes, edges, hoveredNode])
+    ctx.restore()
+  }, [nodes, edges, hoveredNode, draggedNode, zoom, offset])
 
-  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const getMousePos = (e: React.MouseEvent) => {
     const canvas = canvasRef.current
-    if (!canvas) return
-
+    if (!canvas) return { x: 0, y: 0 }
     const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
+    return {
+      x: (e.clientX - rect.left) * (canvas.width / rect.width),
+      y: (e.clientY - rect.top) * (canvas.height / rect.height)
+    }
+  }
 
-    const mouseX = (e.clientX - rect.left) * scaleX
-    const mouseY = (e.clientY - rect.top) * scaleY
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const pos = getMousePos(e)
+    const worldX = (pos.x - offset.x) / zoom
+    const worldY = (pos.y - offset.y) / zoom
 
-    // Check for hover on nodes
-    let hovered = null
+    let clickedNode = null
     for (const node of nodes) {
-      const dx = mouseX - node.x
-      const dy = mouseY - node.y
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      
-      if (dist < node.radius + 10) {
-        hovered = node.id
+      const dx = worldX - node.x
+      const dy = worldY - node.y
+      if (Math.sqrt(dx * dx + dy * dy) < node.radius + 10) {
+        clickedNode = node.id
         break
       }
     }
 
-    setHoveredNode(hovered)
+    if (clickedNode) {
+      setDraggedNode(clickedNode)
+    } else {
+      isDraggingCanvas.current = true
+      lastMousePos.current = { x: e.clientX, y: e.clientY }
+    }
   }
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!hoveredNode) return
-    
-    const node = nodes.find(n => n.id === hoveredNode)
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const pos = getMousePos(e)
+    const worldX = (pos.x - offset.x) / zoom
+    const worldY = (pos.y - offset.y) / zoom
+
+    if (draggedNode) {
+      setNodes(prev => prev.map(n => n.id === draggedNode ? { ...n, x: worldX, y: worldY } : n))
+    } else if (isDraggingCanvas.current) {
+      const dx = e.clientX - lastMousePos.current.x
+      const dy = e.clientY - lastMousePos.current.y
+      setOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }))
+      lastMousePos.current = { x: e.clientX, y: e.clientY }
+    } else {
+      let hovered = null
+      for (const node of nodes) {
+        const dx = worldX - node.x
+        const dy = worldY - node.y
+        if (Math.sqrt(dx * dx + dy * dy) < node.radius + 10) {
+          hovered = node.id
+          break
+        }
+      }
+      setHoveredNode(hovered)
+    }
+  }
+
+  const handleMouseUp = () => {
+    setDraggedNode(null)
+    isDraggingCanvas.current = false
+  }
+
+  const handleCanvasClick = (e: React.MouseEvent) => {
+    if (draggedNode || isDraggingCanvas.current) return
+    const pos = getMousePos(e)
+    const worldX = (pos.x - offset.x) / zoom
+    const worldY = (pos.y - offset.y) / zoom
+
+    const node = nodes.find(n => {
+      const dx = worldX - n.x
+      const dy = worldY - n.y
+      return Math.sqrt(dx * dx + dy * dy) < n.radius + 10
+    })
+
     if (node && lore) {
       window.location.href = `/lore/${lore.slug}/${node.slug}`
     }
@@ -332,9 +418,11 @@ export default function GraphView() {
           ref={canvasRef}
           width={800}
           height={600}
-          className="w-full h-auto cursor-pointer"
-          style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
-          onMouseMove={handleCanvasMouseMove}
+          className="w-full h-auto cursor-grab active:cursor-grabbing"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
           onClick={handleCanvasClick}
         />
         

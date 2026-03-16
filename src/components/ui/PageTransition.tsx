@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, Transition } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
 
 interface PageTransitionProps {
@@ -20,7 +20,7 @@ const pageVariants = {
   }
 }
 
-const pageTransition = {
+const pageTransition: Transition = {
   type: 'tween',
   ease: 'anticipate',
   duration: 0.3

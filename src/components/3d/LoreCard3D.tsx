@@ -24,21 +24,20 @@ export default function LoreCard3D({ position, title, description, imageUrl, col
       const floatY = Math.sin(state.clock.elapsedTime * 2 + index) * 0.2
       meshRef.current.position.y = position[1] + floatY
       
-      if (!hovered && !flipped) {
-        meshRef.current.rotation.y += 0.005
-      }
+      const targetRotationY = flipped ? Math.PI : (hovered ? 0.2 : 0)
+      meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetRotationY, 0.1)
       
-      meshRef.current.scale.x = THREE.MathUtils.lerp(meshRef.current.scale.x, hovered ? 1.1 : 1, 0.1)
-      meshRef.current.scale.y = THREE.MathUtils.lerp(meshRef.current.scale.y, hovered ? 1.1 : 1, 0.1)
-      meshRef.current.scale.z = THREE.MathUtils.lerp(meshRef.current.scale.z, hovered ? 1.1 : 1, 0.1)
+      const scale = hovered ? 1.15 : 1
+      meshRef.current.scale.setScalar(THREE.MathUtils.lerp(meshRef.current.scale.x, scale, 0.1))
     }
   })
 
-  const handleClick = () => {
+  const handleClick = (e: any) => {
+    e.stopPropagation()
     setFlipped(!flipped)
-    setTimeout(() => {
-      if (flipped) onClick()
-    }, 300)
+    if (flipped) {
+      setTimeout(onClick, 500)
+    }
   }
 
   return (

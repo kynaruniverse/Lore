@@ -1,48 +1,10 @@
 import { supabase } from './supabaseClient'
 import { useEffect, useState } from 'react'
+import { Database } from './database.types'
 
-export type Lore = {
-  id: string
-  slug: string
-  title: string
-  description: string
-  category: string
-  cover_image_url: string
-  hero_image_url: string
-  color: string
-  page_count: number
-  contributor_count: number
-  is_public: boolean
-  tags: string[]
-  views: number
-  trending: boolean
-  created_at: string
-  updated_at: string
-}
-
-export type Page = {
-  id: string
-  lore_id: string
-  slug: string
-  title: string
-  category: string
-  content: string
-  excerpt: string
-  image_url: string | null
-  tags: string[]
-  completeness: number
-  missing_fields: string[]
-  views: number
-  created_at: string
-  updated_at: string
-}
-
-export type Relationship = {
-  source_page_id: string
-  target_page_id: string
-  type: string
-  label: string | null
-}
+export type Lore = Database['public']['Tables']['lores']['Row']
+export type Page = Database['public']['Tables']['pages']['Row']
+export type Relationship = Database['public']['Tables']['relationships']['Row']
 
 // Hooks for realtime data
 export function useLores() {

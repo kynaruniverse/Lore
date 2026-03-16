@@ -78,11 +78,11 @@ export function CommandPalette() {
             .select('id, title, slug')
             .ilike('title', `%${search}%`)
             .limit(5),
-          supabase
+          (supabase
             .from('pages')
-            .select('id, title, slug, lore_id, lores!inner(slug)')
+            .select('id, title, slug, lore_id, lores:lores!inner(slug)')
             .ilike('title', `%${search}%`)
-            .limit(5)
+            .limit(5) as any) as Promise<{ data: any[] | null }>
         ])
 
         const loreItems: CommandItem[] = (lores.data || []).map(lore => ({

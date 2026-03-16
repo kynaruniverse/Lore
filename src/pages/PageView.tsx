@@ -65,7 +65,7 @@ export default function PageView() {
       const { data: loreData, error: loreError } = await supabase
         .from('lores')
         .select('id, slug, title, cover_image_url')
-        .eq('slug', loreSlug)
+        .eq('slug', loreSlug || '')
         .single()
       
       if (loreError) throw loreError
@@ -77,7 +77,7 @@ export default function PageView() {
         .from('pages')
         .select('*')
         .eq('lore_id', loreData.id)
-        .eq('slug', pageSlug)
+        .eq('slug', pageSlug || '')
         .single()
       
       if (pageError) throw pageError

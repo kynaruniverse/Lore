@@ -43,11 +43,11 @@ export function SearchAutocomplete() {
           .select('id, title, slug')
           .ilike('title', searchTerm)
           .limit(3),
-        supabase
+        (supabase
           .from('pages')
-          .select('id, title, slug, lore_id, lores!inner(slug)')
+          .select('id, title, slug, lore_id, lores:lores!inner(slug)')
           .ilike('title', searchTerm)
-          .limit(3)
+          .limit(3) as any) as Promise<{ data: any[] | null }>
       ])
 
       const allSuggestions: Suggestion[] = [
