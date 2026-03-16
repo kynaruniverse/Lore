@@ -24,6 +24,54 @@ export const seedLores = [
     tags: ['FromSoftware', 'RPG', 'Fantasy', 'Soulslike'],
     trending: true,
     is_public: true
+  },
+  {
+    title: 'The Witcher',
+    slug: 'the-witcher',
+    description: 'The world of Geralt of Rivia — a monster hunter in a dark fantasy universe. Explore the Continent, its kingdoms, monsters, and the complex characters from Andrzej Sapkowski\'s books and the Netflix series.',
+    category: 'book',
+    cover_image_url: 'https://images.unsplash.com/photo-1585314614250-d2132b1c7b9d?w=600&q=80',
+    hero_image_url: 'https://images.unsplash.com/photo-1585314614250-d2132b1c7b9d?w=1200&q=80',
+    color: '#8B5A2B',
+    tags: ['Fantasy', 'Netflix', 'Andrzej Sapkowski', 'Monsters'],
+    trending: true,
+    is_public: true
+  },
+  {
+    title: 'Game of Thrones',
+    slug: 'game-of-thrones',
+    description: 'The complete knowledge base for Westeros and Essos — Houses, characters, battles, prophecies, and the full history of the Seven Kingdoms from the Age of Heroes to the Long Night.',
+    category: 'tv',
+    cover_image_url: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=600&q=80',
+    hero_image_url: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=1200&q=80',
+    color: '#8B5E3C',
+    tags: ['HBO', 'Fantasy', 'George R.R. Martin', 'Westeros'],
+    trending: true,
+    is_public: true
+  },
+  {
+    title: 'The Lord of the Rings',
+    slug: 'lord-of-the-rings',
+    description: 'Tolkien\'s complete legendarium — from the Ainulindalë to the Fourth Age. Characters, places, languages, histories, and the deep mythology of Middle-earth.',
+    category: 'book',
+    cover_image_url: 'https://images.unsplash.com/photo-1535666669445-e8c15cd2e7d9?w=600&q=80',
+    hero_image_url: 'https://images.unsplash.com/photo-1535666669445-e8c15cd2e7d9?w=1200&q=80',
+    color: '#4A7C59',
+    tags: ['Tolkien', 'Fantasy', 'Middle-earth', 'Epic'],
+    trending: false,
+    is_public: true
+  },
+  {
+    title: 'Formula 1',
+    slug: 'formula-1',
+    description: 'The complete Formula 1 knowledge base — drivers, teams, circuits, seasons, technical regulations, and the greatest moments in the history of the pinnacle of motorsport.',
+    category: 'sports',
+    cover_image_url: 'https://images.unsplash.com/photo-1544461772-722aedcb414b?w=600&q=80',
+    hero_image_url: 'https://images.unsplash.com/photo-1544461772-722aedcb414b?w=1200&q=80',
+    color: '#E8002D',
+    tags: ['Motorsport', 'Racing', 'FIA', 'Grand Prix'],
+    trending: true,
+    is_public: true
   }
 ]
 

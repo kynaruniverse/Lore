@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "seed": "dotenv -e .env -- tsx scripts/seed.ts",
     "seed-pages": "dotenv -e .env -- tsx scripts/seed-pages.ts",
-    "seed-rels": "dotenv -e .env -- tsx scripts/seed-relationships.ts"
+    "seed-rels": "dotenv -e .env -- tsx scripts/seed-relationships.ts",
+    "seed-witcher": "dotenv -e .env -- tsx scripts/seed-witcher.ts",
+    "seed-witcher-rels": "dotenv -e .env -- tsx scripts/seed-witcher-rels.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.6",
