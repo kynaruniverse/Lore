@@ -8,14 +8,14 @@ interface FloatingCardProps {
   description: string
   imageUrl: string
   slug: string
-  pageCount ? : number
-  contributorCount ? : number
-  category ? : string
+  pageCount?: number
+  contributorCount?: number
+  category?: string
 }
 
 // Stable random offset per card instance (computed once on mount via useRef)
 function useStableRandom(min: number, max: number) {
-  const ref = useRef < number | null > (null)
+  const ref = useRef<number | null>(null)
   if (ref.current === null) ref.current = min + Math.random() * (max - min)
   return ref.current
 }
@@ -31,19 +31,22 @@ export default function FloatingCard({
 }: FloatingCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
   const rotateOffset = useStableRandom(-0.8, 0.8)
-  const duration = useStableRandom(5, 7)
-  
+  const duration    = useStableRandom(5, 7)
+
   const floatAnimation = {
-    y: [0, -8, 0],
+    y:      [0, -8, 0],
     rotate: [rotateOffset * 0.3, rotateOffset * 0.8, rotateOffset * 0.3],
-    transition: { duration, repeat: Infinity, ease: 'easeInOut'
-      as const },
+    transition: {
+      duration,
+      repeat: Infinity,
+      ease: 'easeInOut' as const,
+    },
   }
-  
+
   const FALLBACK = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80'
-  
+
   const CARD_HEIGHT = 400
-  
+
   return (
     <div className="relative w-full" style={{ height: CARD_HEIGHT, perspective: '1500px' }}>
       <motion.div
