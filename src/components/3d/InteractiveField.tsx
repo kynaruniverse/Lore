@@ -1,6 +1,4 @@
-import { useFrame } from '@react-three/fiber'
-import { useRef } from 'react'
-import * as THREE from 'three'
+import { useEffect, useRef } from 'react'
 
 export function useMouseInfluence() {
   const mousePosition = useRef({ x: 0, y: 0 })
