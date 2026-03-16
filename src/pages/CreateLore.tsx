@@ -50,7 +50,9 @@ export default function CreateLore() {
           category: formData.category,
           tags,
           is_public: formData.isPublic,
-          cover_image_url: `https://source.unsplash.com/random/800x600/?${slug}`,
+          // Use a more reliable placeholder image service
+          cover_image_url: `https://images.unsplash.com/photo-1485846234645-a62644f84728?w=800&q=80`,
+          hero_image_url: `https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1200&q=80`,
           color: '#' + Math.floor(Math.random()*16777215).toString(16)
         })
 

@@ -6,22 +6,24 @@ export const seedLores = [
     slug: 'breaking-bad',
     description: 'The complete knowledge archive for Breaking Bad and Better Call Saul — characters, locations, chemistry, the cartel, and every pivotal moment in Albuquerque\'s most dangerous story.',
     category: 'tv',
-    cover_image_url: 'https://image.tmdb.org/t/p/w780/ggFHVNu6YYI5L9pCfOacjizRGt.jpg',
-    hero_image_url: 'https://image.tmdb.org/t/p/w1280/ggFHVNu6YYI5L9pCfOacjizRGt.jpg',
+    cover_image_url: 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=800&q=80',
+    hero_image_url: 'https://images.unsplash.com/photo-1594909122845-11baa439b7bf?w=1200&q=80',
     color: '#C4622D',
     tags: ['Drama', 'Crime', 'AMC', 'Vince Gilligan'],
-    trending: true
+    trending: true,
+    is_public: true
   },
   {
     title: 'Elden Ring',
     slug: 'elden-ring',
     description: 'The definitive lore compendium for the Lands Between — demigods, Great Runes, the Erdtree, ancient history, and every secret FromSoftware buried in item descriptions.',
     category: 'game',
-    cover_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg',
-    hero_image_url: 'https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/capsule_616x353.jpg',
+    cover_image_url: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=800&q=80',
+    hero_image_url: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=1200&q=80',
     color: '#B8922A',
     tags: ['FromSoftware', 'RPG', 'Fantasy', 'Soulslike'],
-    trending: true
+    trending: true,
+    is_public: true
   }
 ]
 
