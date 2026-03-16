@@ -40,7 +40,7 @@ export default function GraphView() {
   const [loading, setLoading] = useState(true)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number>(0)
 
   useEffect(() => {
     if (loreSlug) {

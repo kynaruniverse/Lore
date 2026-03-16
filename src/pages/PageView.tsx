@@ -2,10 +2,10 @@ import { useParams, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
-import { ArrowLeft, Edit, Eye, Calendar, Tag, AlertCircle } from 'lucide-react'
+import { Edit, Eye, Calendar, AlertCircle } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 
-type Page = {
+interface Page {
   id: string
   lore_id: string
   slug: string
@@ -22,21 +22,21 @@ type Page = {
   updated_at: string
 }
 
-type Lore = {
+interface Lore {
   id: string
   slug: string
   title: string
   cover_image_url: string
 }
 
-type RelatedPage = {
+interface RelatedPage {
   id: string
   title: string
   slug: string
   category: string
 }
 
-type Relationship = {
+interface Relationship {
   source_page_id: string
   target_page_id: string
   type: string
@@ -62,23 +62,25 @@ export default function PageView() {
       setLoading(true)
       
       // Fetch lore first
-      const { data: loreData } = await supabase
+      const { data: loreData, error: loreError } = await supabase
         .from('lores')
         .select('id, slug, title, cover_image_url')
         .eq('slug', loreSlug)
         .single()
       
+      if (loreError) throw loreError
       if (!loreData) return
       setLore(loreData)
 
       // Fetch page
-      const { data: pageData } = await supabase
+      const { data: pageData, error: pageError } = await supabase
         .from('pages')
         .select('*')
         .eq('lore_id', loreData.id)
         .eq('slug', pageSlug)
         .single()
       
+      if (pageError) throw pageError
       if (!pageData) return
       setPage(pageData)
 
@@ -89,7 +91,7 @@ export default function PageView() {
         .eq('id', pageData.id)
 
       // Fetch relationships with target page details
-      const { data: relData } = await supabase
+      const { data: relData, error: relError } = await supabase
         .from('relationships')
         .select(`
           source_page_id,
@@ -105,8 +107,15 @@ export default function PageView() {
         `)
         .eq('source_page_id', pageData.id)
 
+      if (relError) throw relError
+      
       if (relData) {
-        setRelationships(relData as Relationship[])
+        // Transform the data to match our Relationship interface
+        const formattedRelationships = relData.map((rel: any) => ({
+          ...rel,
+          target_page: Array.isArray(rel.target_page) ? rel.target_page[0] : rel.target_page
+        }))
+        setRelationships(formattedRelationships)
       }
     } catch (error) {
       console.error('Error fetching page:', error)
@@ -161,7 +170,7 @@ export default function PageView() {
 
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
           <span className="px-2 py-1 bg-primary/20 text-primary text-xs rounded-full">
             {page.category}
           </span>
@@ -251,7 +260,7 @@ export default function PageView() {
                 <div className="flex items-start gap-3">
                   <div className="w-1 h-1 mt-2 rounded-full bg-primary" />
                   <div>
-                    <h3 className="font-medium group-hover:text-primary transition-colors">
+                    <h3 className="font-medium hover:text-primary transition-colors">
                       {rel.target_page.title}
                     </h3>
                     <p className="text-sm text-muted-foreground">

@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: oklch(0.98 0.004 65);
-  --color-foreground: oklch(0.18 0.012 45);
-  --color-primary: oklch(0.55 0.18 42);
+  --color-background: oklch(0.12 0.012 45);
+  --color-foreground: oklch(0.93 0.01 65);
+  --color-primary: oklch(0.62 0.18 42);
   --color-primary-foreground: oklch(0.98 0.005 65);
-  --color-muted-foreground: oklch(0.50 0.015 65);
-  --color-border: oklch(0.88 0.008 65);
+  --color-muted-foreground: oklch(0.55 0.015 65);
+  --color-border: oklch(0.28 0.012 45);
+  --color-card: oklch(0.17 0.014 45);
+  --color-accent: oklch(0.22 0.016 45);
   
-  --font-sans: Inter, sans-serif;
+  --font-sans: Inter, system-ui, sans-serif;
   --font-serif: Lora, Georgia, serif;
 }
 
@@ -32,6 +34,10 @@
   .ember-glow {
     box-shadow: 0 0 20px oklch(0.62 0.18 42 / 30%), 0 0 60px oklch(0.62 0.18 42 / 10%);
   }
+  
+  .lore-card {
+    @apply bg-card border border-border rounded-xl transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5;
+  }
 }
 
 /* Animations */
@@ -48,29 +54,4 @@
 
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
-}
-
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Better focus styles */
-*:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
-/* Loading animation */
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
