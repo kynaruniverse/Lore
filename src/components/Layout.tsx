@@ -8,27 +8,30 @@ interface LayoutProps {
   backLabel?: string
 }
 
-export default function Layout({ children, showBackButton = false, backTo = '/', backLabel = 'Back' }: LayoutProps) {
+export default function Layout({ 
+  children, 
+  showBackButton = false, 
+  backTo = '/', 
+  backLabel = 'Back' 
+}: LayoutProps) {
   const location = useLocation()
 
   return (
     <div className="min-h-screen bg-[#0F0F0F]">
-      {/* Simple header with optional back button */}
       {showBackButton && (
         <header className="sticky top-0 z-50 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-[#2A2A2A]">
           <div className="container mx-auto px-4 py-4">
-            <Link to={backTo} className="flex items-center gap-2 text-[#A0A0A0] hover:text-[#E5E5E5] transition-colors">
+            <Link 
+              to={backTo} 
+              className="flex items-center gap-2 text-[#A0A0A0] hover:text-[#E5E5E5] transition-colors"
+            >
               <ArrowLeft className="w-5 h-5" />
               <span>{backLabel}</span>
             </Link>
           </div>
         </header>
       )}
-
-      {/* Main content */}
-      <main>
-        {children}
-      </main>
+      <main>{children}</main>
     </div>
   )
 }

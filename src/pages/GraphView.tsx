@@ -2,8 +2,6 @@ import { useParams, Link } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ZoomIn, ZoomOut } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
-import { GraphLegend } from '../components/GraphView/GraphLegend'
-import { GraphStats } from '../components/GraphView/GraphStats'
 
 type Node = {
   id: string
@@ -25,16 +23,11 @@ type Edge = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Character: '#C4622D',
-  Location: '#2D7FC4',
-  Event: '#8B5E3C',
-  Item: '#B8922A',
-  Organisation: '#4A7C59',
-  Concept: '#9333EA',
-  Timeline: '#0891B2',
-  Episode: '#E11D48',
-  Season: '#4F46E5',
-  default: '#6B7280'
+  Character: '#C4A962',
+  Location: '#3A4F6E',
+  Event: '#6E4F3A',
+  Item: '#4A6E3A',
+  default: '#A0A0A0'
 }
 
 export default function GraphView() {
@@ -45,12 +38,8 @@ export default function GraphView() {
   const [edges, setEdges] = useState<Edge[]>([])
   const [loading, setLoading] = useState(true)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
-  const [draggedNode, setDraggedNode] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
   const animationRef = useRef<number>(0)
-  const isDraggingCanvas = useRef(false)
-  const lastMousePos = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
     if (loreSlug) {
@@ -63,7 +52,7 @@ export default function GraphView() {
       const { data: loreData } = await supabase
         .from('lores')
         .select('*')
-        .eq('slug', loreSlug || '')
+        .eq('slug', loreSlug)
         .single()
 
       if (!loreData) return
@@ -101,12 +90,7 @@ export default function GraphView() {
       })
 
       setNodes(initialNodes)
-      setEdges((relationships || []).map((r: any) => ({
-        source: r.source_page_id,
-        target: r.target_page_id,
-        type: r.type,
-        label: r.label
-      })))
+      setEdges(relationships || [])
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -128,30 +112,15 @@ export default function GraphView() {
             const dx = newNodes[j].x - newNodes[i].x
             const dy = newNodes[j].y - newNodes[i].y
             const dist = Math.sqrt(dx * dx + dy * dy) || 1
-            const force = 8000 / (dist * dist)
+            const force = 5000 / (dist * dist)
+            
             const fx = (dx / dist) * force
             const fy = (dy / dist) * force
+            
             newNodes[i].vx -= fx
             newNodes[i].vy -= fy
             newNodes[j].vx += fx
             newNodes[j].vy += fy
-          }
-        }
-
-        for (const edge of edges) {
-          const source = newNodes.find(n => n.id === edge.source)
-          const target = newNodes.find(n => n.id === edge.target)
-          if (source && target) {
-            const dx = target.x - source.x
-            const dy = target.y - source.y
-            const dist = Math.sqrt(dx * dx + dy * dy) || 1
-            const force = (dist - 150) * 0.02
-            const fx = (dx / dist) * force
-            const fy = (dy / dist) * force
-            source.vx += fx
-            source.vy += fy
-            target.vx -= fx
-            target.vy -= fy
           }
         }
 
@@ -163,20 +132,12 @@ export default function GraphView() {
         }
 
         for (const node of newNodes) {
-          if (node.id === draggedNode) {
-            node.vx = 0
-            node.vy = 0
-            continue
-          }
-          node.vx *= 0.9
-          node.vy *= 0.9
+          node.vx *= 0.95
+          node.vy *= 0.95
           node.x += node.vx
           node.y += node.vy
-          const margin = 100
-          if (node.x < -margin) node.vx += 2
-          if (node.x > 800 + margin) node.vx -= 2
-          if (node.y < -margin) node.vy += 2
-          if (node.y > 600 + margin) node.vy -= 2
+          node.x = Math.max(50, Math.min(750, node.x))
+          node.y = Math.max(50, Math.min(550, node.y))
         }
 
         return newNodes
@@ -186,29 +147,33 @@ export default function GraphView() {
     }
 
     animationRef.current = requestAnimationFrame(simulate)
-    return () => cancelAnimationFrame(animationRef.current)
-  }, [nodes.length, edges, draggedNode])
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [nodes.length])
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas || nodes.length === 0) return
+
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.save()
-    ctx.translate(offset.x, offset.y)
-    ctx.scale(zoom, zoom)
 
-    ctx.lineWidth = 1.5
+    ctx.lineWidth = 1
     for (const edge of edges) {
       const source = nodes.find(n => n.id === edge.source)
       const target = nodes.find(n => n.id === edge.target)
+      
       if (source && target) {
         const isHovered = hoveredNode === source.id || hoveredNode === target.id
-        ctx.strokeStyle = isHovered ? '#C4622D' : '#4B5563'
-        ctx.globalAlpha = isHovered ? 0.9 : 0.4
-        ctx.setLineDash(isHovered ? [] : [5, 5])
+        ctx.strokeStyle = isHovered ? '#C4A962' : '#2A2A2A'
+        ctx.globalAlpha = isHovered ? 0.8 : 0.3
+        ctx.setLineDash(isHovered ? [] : [4, 4])
+        
         ctx.beginPath()
         ctx.moveTo(source.x, source.y)
         ctx.lineTo(target.x, target.y)
@@ -220,128 +185,153 @@ export default function GraphView() {
     for (const node of nodes) {
       const color = CATEGORY_COLORS[node.category] || CATEGORY_COLORS.default
       const isHovered = hoveredNode === node.id
-      const isDragged = draggedNode === node.id
-      if (isHovered || isDragged) {
+      
+      if (isHovered) {
         ctx.shadowColor = color
-        ctx.shadowBlur = 20
+        ctx.shadowBlur = 15
       } else {
         ctx.shadowBlur = 0
       }
+
       ctx.beginPath()
-      ctx.arc(node.x, node.y, node.radius * (isHovered ? 1.2 : 1), 0, 2 * Math.PI)
+      ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI)
       ctx.fillStyle = color
-      ctx.globalAlpha = isHovered || isDragged ? 1 : 0.8
+      ctx.globalAlpha = isHovered ? 1 : 0.7
       ctx.fill()
-      ctx.strokeStyle = '#FFFFFF'
-      ctx.lineWidth = isHovered ? 3 : 2
+      ctx.strokeStyle = '#E5E5E5'
+      ctx.lineWidth = 2
       ctx.stroke()
+
       ctx.shadowBlur = 0
-      ctx.font = `bold ${isHovered ? '14px' : '12px'} Inter, sans-serif`
-      ctx.fillStyle = '#FFFFFF'
+      ctx.font = '12px Inter, sans-serif'
+      ctx.fillStyle = '#E5E5E5'
       ctx.globalAlpha = 1
       ctx.textAlign = 'center'
-      ctx.fillText(node.title, node.x, node.y + node.radius + (isHovered ? 22 : 18))
-      ctx.font = '10px Inter, sans-serif'
-      ctx.fillStyle = '#9CA3AF'
-      ctx.fillText(node.category.toUpperCase(), node.x, node.y - node.radius - (isHovered ? 12 : 8))
+      ctx.fillText(
+        node.title.length > 15 ? node.title.slice(0, 12) + '...' : node.title,
+        node.x,
+        node.y + node.radius + 18
+      )
     }
-    ctx.restore()
-  }, [nodes, edges, hoveredNode, draggedNode, zoom, offset])
+  }, [nodes, edges, hoveredNode])
 
-  const getMousePos = (e: React.MouseEvent) => {
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
-    if (!canvas) return { x: 0, y: 0 }
-    const rect = canvas.getBoundingClientRect()
-    return {
-      x: (e.clientX - rect.left) * (canvas.width / rect.width),
-      y: (e.clientY - rect.top) * (canvas.height / rect.height)
-    }
-  }
+    if (!canvas) return
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    const pos = getMousePos(e)
-    const worldX = (pos.x - offset.x) / zoom
-    const worldY = (pos.y - offset.y) / zoom
-    let clickedNode = null
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+
+    const mouseX = (e.clientX - rect.left) * scaleX
+    const mouseY = (e.clientY - rect.top) * scaleY
+
+    let hovered = null
     for (const node of nodes) {
-      const dx = worldX - node.x
-      const dy = worldY - node.y
-      if (Math.sqrt(dx * dx + dy * dy) < node.radius + 10) {
-        clickedNode = node.id
+      const dx = mouseX - node.x
+      const dy = mouseY - node.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      
+      if (dist < node.radius + 10) {
+        hovered = node.id
         break
       }
     }
-    if (clickedNode) {
-      setDraggedNode(clickedNode)
-    } else {
-      isDraggingCanvas.current = true
-      lastMousePos.current = { x: e.clientX, y: e.clientY }
-    }
+
+    setHoveredNode(hovered)
   }
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    const pos = getMousePos(e)
-    const worldX = (pos.x - offset.x) / zoom
-    const worldY = (pos.y - offset.y) / zoom
-    if (draggedNode) {
-      setNodes(prev => prev.map(n => n.id === draggedNode ? { ...n, x: worldX, y: worldY } : n))
-    } else if (isDraggingCanvas.current) {
-      const dx = e.clientX - lastMousePos.current.x
-      const dy = e.clientY - lastMousePos.current.y
-      setOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }))
-      lastMousePos.current = { x: e.clientX, y: e.clientY }
-    } else {
-      let hovered = null
-      for (const node of nodes) {
-        const dx = worldX - node.x
-        const dy = worldY - node.y
-        if (Math.sqrt(dx * dx + dy * dy) < node.radius + 10) {
-          hovered = node.id
-          break
-        }
-      }
-      setHoveredNode(hovered)
-    }
-  }
-
-  const handleMouseUp = () => {
-    setDraggedNode(null)
-    isDraggingCanvas.current = false
-  }
-
-  const handleCanvasClick = (e: React.MouseEvent) => {
-    if (draggedNode || isDraggingCanvas.current) return
-    const pos = getMousePos(e)
-    const worldX = (pos.x - offset.x) / zoom
-    const worldY = (pos.y - offset.y) / zoom
-    const node = nodes.find(n => {
-      const dx = worldX - n.x
-      const dy = worldY - n.y
-      return Math.sqrt(dx * dx + dy * dy) < n.radius + 10
-    })
+  const handleCanvasClick = () => {
+    if (!hoveredNode) return
+    
+    const node = nodes.find(n => n.id === hoveredNode)
     if (node && lore) {
       window.location.href = `/lore/${lore.slug}/${node.slug}`
     }
   }
 
-  if (loading) return <div className="text-center py-12 animate-pulse">Loading graph...</div>
-  if (!lore) return <div className="text-center py-12"><h1 className="text-2xl font-bold mb-4">Lore not found</h1><Link to="/" className="text-primary hover:underline">Return home</Link></div>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+        <div className="text-[#C4A962]">Loading graph...</div>
+      </div>
+    )
+  }
 
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <Link to={`/lore/${lore.slug}`} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="w-4 h-4" /> Back to {lore.title}
-        </Link>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setZoom(z => Math.min(z + 0.2, 2))} className="p-2 border border-border rounded-lg hover:bg-accent"><ZoomIn className="w-4 h-4" /></button>
-          <button onClick={() => setZoom(z => Math.max(z - 0.2, 0.5))} className="p-2 border border-border rounded-lg hover:bg-accent"><ZoomOut className="w-4 h-4" /></button>
+  if (!lore) {
+    return (
+      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl text-[#E5E5E5] mb-4">Lore not found</h1>
+          <Link to="/" className="text-[#C4A962]">Return home</Link>
         </div>
       </div>
-      <div className="relative border border-border rounded-xl overflow-hidden bg-card">
-        <canvas ref={canvasRef} width={800} height={600} className="w-full h-auto cursor-grab active:cursor-grabbing" onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onMouseLeave={handleMouseUp} onClick={handleCanvasClick} />
-        <GraphLegend />
-        <GraphStats nodeCount={nodes.length} edgeCount={edges.length} />
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0F0F0F]">
+      <header className="sticky top-0 z-50 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-[#2A2A2A]">
+        <div className="px-6 py-4">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <Link 
+              to={`/lore/${lore.slug}`} 
+              className="flex items-center gap-2 text-[#A0A0A0] hover:text-[#E5E5E5] transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back to {lore.title}</span>
+            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setZoom(z => Math.min(z + 0.2, 2))}
+                className="p-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg hover:bg-[#222]"
+              >
+                <ZoomIn className="w-4 h-4 text-[#A0A0A0]" />
+              </button>
+              <button
+                onClick={() => setZoom(z => Math.max(z - 0.2, 0.5))}
+                className="p-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg hover:bg-[#222]"
+              >
+                <ZoomOut className="w-4 h-4 text-[#A0A0A0]" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="p-6">
+        <div className="relative border border-[#2A2A2A] rounded-xl overflow-hidden bg-[#1A1A1A] max-w-4xl mx-auto">
+          <canvas
+            ref={canvasRef}
+            width={800}
+            height={600}
+            className="w-full h-auto cursor-pointer"
+            style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
+            onMouseMove={handleCanvasMouseMove}
+            onClick={handleCanvasClick}
+          />
+          
+          <div className="absolute bottom-4 right-4 bg-[#1A1A1A]/90 backdrop-blur-sm border border-[#2A2A2A] rounded-lg p-3">
+            <h3 className="text-sm font-medium text-[#E5E5E5] mb-2">Categories</h3>
+            <div className="space-y-1">
+              {Object.entries(CATEGORY_COLORS).map(([cat, color]) => (
+                <div key={cat} className="flex items-center gap-2 text-xs text-[#A0A0A0]">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
+                  <span>{cat}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="absolute top-4 left-4 bg-[#1A1A1A]/90 backdrop-blur-sm border border-[#2A2A2A] rounded-lg p-3">
+            <div className="text-sm text-[#E5E5E5]">
+              <span className="font-medium">{nodes.length}</span> pages
+            </div>
+            <div className="text-sm text-[#E5E5E5]">
+              <span className="font-medium">{edges.length}</span> relationships
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

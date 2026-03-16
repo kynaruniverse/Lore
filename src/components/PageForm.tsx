@@ -1,21 +1,13 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
-import { FormInput } from './ui/FormInput'
-import { RelationshipManager } from './PageForm/RelationshipManager'
-import BlockEditor from './BlockEditor'
-
-const PAGE_CATEGORIES = [
-  'Character', 'Location', 'Event', 'Item', 'Organisation',
-  'Concept', 'Timeline', 'Episode', 'Season', 'Driver',
-  'Team', 'Circuit', 'Match', 'Other'
-]
 
 interface PageFormProps {
   loreId: string
   loreSlug: string
   initialData?: any
   isEditing?: boolean
-  existingPages?: Array<{ id: string; title: string; slug: string }>
+  existingPages?: any[]
   onSuccess: (slug: string) => void
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void
 }
@@ -25,24 +17,14 @@ export default function PageForm({
   loreSlug, 
   initialData, 
   isEditing = false,
-  existingPages = [],
   onSuccess,
   showToast
 }: PageFormProps) {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
-  
   const [title, setTitle] = useState(initialData?.title || '')
-  const [category, setCategory] = useState(initialData?.category || 'Character')
   const [content, setContent] = useState(initialData?.content || '')
-  const [imageUrl, setImageUrl] = useState(initialData?.image_url || '')
-  const [tags, setTags] = useState(initialData?.tags?.join(', ') || '')
-  const [relationships, setRelationships] = useState<any[]>(
-    initialData?.relationships?.map((r: any) => ({
-      targetPageId: r.target_page_id,
-      type: r.type,
-      label: r.label || r.target_page_id
-    })) || []
-  )
+  const [category, setCategory] = useState(initialData?.category || 'Character')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,32 +42,14 @@ export default function PageForm({
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
 
-      const excerpt = content
-        .replace(/[#*`]/g, '')
-        .slice(0, 160)
-        .trim() + (content.length > 160 ? '...' : '')
-
-      const tagArray = tags
-        .split(',')
-        .map((t: string) => t.trim())
-        .filter(Boolean)
-
       const pageData = {
         lore_id: loreId,
         slug,
         title: title.trim(),
         category,
         content: content.trim(),
-        excerpt,
-        image_url: imageUrl.trim() || null,
-        tags: tagArray,
-        completeness: content.length > 200 ? 70 : 40,
-        missing_fields: [],
-        relationships: relationships.map(r => ({
-          target_page_id: r.targetPageId,
-          type: r.type,
-          label: r.label
-        }))
+        excerpt: content.slice(0, 160) + '...',
+        tags: []
       }
 
       if (isEditing && initialData) {
@@ -95,128 +59,67 @@ export default function PageForm({
           .eq('id', initialData.id)
 
         if (error) throw error
-
-        await supabase
-          .from('relationships')
-          .delete()
-          .eq('source_page_id', initialData.id)
-
-        for (const rel of relationships) {
-          await supabase
-            .from('relationships')
-            .insert({
-              source_page_id: initialData.id,
-              target_page_id: rel.targetPageId,
-              type: rel.type,
-              label: rel.label
-            })
-        }
-
         onSuccess(slug)
       } else {
-        const { data: newPage, error } = await supabase
+        const { error } = await supabase
           .from('pages')
           .insert(pageData)
-          .select()
-          .single()
 
         if (error) throw error
-
-        for (const rel of relationships) {
-          await supabase
-            .from('relationships')
-            .insert({
-              source_page_id: newPage.id,
-              target_page_id: rel.targetPageId,
-              type: rel.type,
-              label: rel.label
-            })
-        }
-
-        await supabase
-          .from('lores')
-          .update({ 
-            page_count: (existingPages?.length || 0) + 1,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', loreId)
-
         onSuccess(slug)
       }
     } catch (error) {
       console.error('Error saving page:', error)
-      showToast('Error saving page. Please try again.', 'error')
+      showToast('Error saving page', 'error')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormInput 
-          label="Title *" 
-          value={title} 
-          onChange={(e) => setTitle(e.target.value)} 
-          placeholder="e.g. Walter White..." 
-          required 
-        />
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Category</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40"
-          >
-            {PAGE_CATEGORIES.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="border border-border rounded-xl p-6 bg-card/50">
-        <label className="block text-sm font-medium mb-4">Content</label>
-        <BlockEditor 
-          initialValue={content} 
-          onChange={(markdown) => setContent(markdown)} 
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
+      <div>
+        <label className="block text-sm font-medium text-[#E5E5E5] mb-2">Title *</label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full px-4 py-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-[#E5E5E5] focus:outline-none focus:border-[#C4A962]"
+          required
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <FormInput 
-          label="Image URL (optional)" 
-          type="url" 
-          value={imageUrl} 
-          onChange={(e) => setImageUrl(e.target.value)} 
-          placeholder="https://..." 
-        />
-
-        <FormInput 
-          label="Tags (comma separated)" 
-          value={tags} 
-          onChange={(e) => setTags(e.target.value)} 
-          placeholder="e.g. Protagonist, Chemistry" 
-        />
+      <div>
+        <label className="block text-sm font-medium text-[#E5E5E5] mb-2">Category</label>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full px-4 py-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-[#E5E5E5] focus:outline-none focus:border-[#C4A962]"
+        >
+          <option value="Character">Character</option>
+          <option value="Location">Location</option>
+          <option value="Event">Event</option>
+          <option value="Item">Item</option>
+          <option value="Organisation">Organisation</option>
+        </select>
       </div>
 
-      <div className="border border-border rounded-xl p-6 bg-card/50">
-        <RelationshipManager 
-          relationships={relationships}
-          existingPages={existingPages}
-          onAdd={(rel) => setRelationships([...relationships, rel])}
-          onRemove={(index) => setRelationships(relationships.filter((_, i) => i !== index))}
-          showToast={showToast}
+      <div>
+        <label className="block text-sm font-medium text-[#E5E5E5] mb-2">Content</label>
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={10}
+          className="w-full px-4 py-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg text-[#E5E5E5] focus:outline-none focus:border-[#C4A962]"
         />
       </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:opacity-90 disabled:opacity-50 ember-glow shadow-lg transition-all"
+        className="w-full py-3 bg-[#C4A962] text-[#0F0F0F] rounded-lg font-semibold hover:bg-[#B89A52] transition-colors disabled:opacity-50"
       >
-        {loading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Page')}
+        {loading ? 'Saving...' : (isEditing ? 'Update Page' : 'Create Page')}
       </button>
     </form>
   )

@@ -1,0 +1,10 @@
+CreateLore
+CreatePage
+EditPage
+GraphView
+Home
+Home3D
+LoreHub
+NotFound
+PageView
+Search

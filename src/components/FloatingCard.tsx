@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
@@ -23,26 +23,24 @@ export default function FloatingCard({
   category 
 }: FloatingCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
-  const [randomOffset] = useState(() => Math.random() * 2 - 1) // Random value between -1 and 1
+  const randomOffset = Math.random() * 2 - 1
 
-  // Floating animation
   const floatAnimation = {
-    y: [0, -10, 0],
-    rotate: [randomOffset * 0.5, randomOffset * 1, randomOffset * 0.5],
+    y: [0, -8, 0],
+    rotate: [randomOffset * 0.3, randomOffset * 0.8, randomOffset * 0.3],
     transition: {
-      duration: 4 + Math.random() * 2,
+      duration: 5 + Math.random() * 2,
       repeat: Infinity,
-      ease: "easeInOut",
-      delay: Math.random() * 2
+      ease: "easeInOut"
     }
   }
 
   return (
-    <div className="relative w-full perspective-1000" style={{ minHeight: '400px' }}>
+    <div className="relative w-full perspective-1000" style={{ minHeight: '380px' }}>
       <motion.div
         className="relative w-full h-full cursor-pointer preserve-3d"
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, type: "spring", stiffness: 260, damping: 20 }}
+        transition={{ duration: 0.5, type: "spring", stiffness: 200, damping: 15 }}
         onClick={() => setIsFlipped(!isFlipped)}
       >
         {/* Front of card */}
@@ -50,8 +48,7 @@ export default function FloatingCard({
           className="absolute w-full h-full backface-hidden"
           animate={!isFlipped ? floatAnimation : {}}
         >
-          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#222] rounded-3xl overflow-hidden border border-[#333] shadow-2xl h-full">
-            {/* Image with overlay */}
+          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#222] rounded-2xl overflow-hidden border border-[#333] shadow-xl h-full">
             <div className="relative h-48 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] to-transparent z-10" />
               <img 
@@ -62,15 +59,12 @@ export default function FloatingCard({
                   e.currentTarget.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80'
                 }}
               />
-              {/* Category badge */}
               {category && (
-                <span className="absolute top-3 right-3 z-20 px-3 py-1 bg-[#C4A962]/90 text-[#0F0F0F] text-xs font-semibold rounded-full backdrop-blur-sm">
+                <span className="absolute top-3 right-3 z-20 px-3 py-1 bg-[#C4A962]/90 text-[#0F0F0F] text-xs font-semibold rounded-full">
                   {category}
                 </span>
               )}
             </div>
-            
-            {/* Content */}
             <div className="p-5">
               <h3 className="text-xl font-serif font-bold text-[#E5E5E5] mb-2 line-clamp-1">
                 {title}
@@ -78,18 +72,6 @@ export default function FloatingCard({
               <p className="text-sm text-[#A0A0A0] line-clamp-2">
                 {description}
               </p>
-              
-              {/* Stats row */}
-              <div className="mt-4 flex items-center gap-3 text-xs text-[#A0A0A0]">
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#C4A962]" />
-                  {pageCount} pages
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#C4A962]" />
-                  {contributorCount} contributors
-                </span>
-              </div>
             </div>
           </div>
         </motion.div>
@@ -99,16 +81,13 @@ export default function FloatingCard({
           className="absolute w-full h-full backface-hidden rotate-y-180"
           animate={isFlipped ? floatAnimation : {}}
         >
-          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#222] rounded-3xl border border-[#333] shadow-2xl p-6 flex flex-col h-full">
+          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#222] rounded-2xl border border-[#333] shadow-xl p-6 flex flex-col h-full">
             <h3 className="text-2xl font-serif font-bold text-[#E5E5E5] mb-3">
               {title}
             </h3>
-            
             <p className="text-sm text-[#A0A0A0] mb-6 flex-1">
               {description}
             </p>
-            
-            {/* Stats in a grid */}
             <div className="grid grid-cols-2 gap-3 mb-6">
               <div className="bg-[#222] rounded-xl p-3 text-center">
                 <div className="text-2xl font-bold text-[#C4A962]">{pageCount}</div>
@@ -119,8 +98,6 @@ export default function FloatingCard({
                 <div className="text-xs text-[#A0A0A0]">Contributors</div>
               </div>
             </div>
-
-            {/* View button */}
             <Link 
               to={`/lore/${slug}`}
               className="block w-full py-3 bg-[#C4A962] text-[#0F0F0F] text-center font-semibold rounded-xl hover:bg-[#B89A52] transition-all transform hover:scale-105 active:scale-95"
@@ -128,8 +105,6 @@ export default function FloatingCard({
             >
               Explore Universe →
             </Link>
-
-            {/* Hint */}
             <p className="text-center text-xs text-[#A0A0A0] mt-3">
               Tap card to flip back
             </p>
