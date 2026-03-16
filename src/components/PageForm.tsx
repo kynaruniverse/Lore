@@ -1,17 +1,13 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Plus, X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
+import { FormInput } from './ui/FormInput'
+import { RelationshipManager } from './PageForm/RelationshipManager'
+import BlockEditor from './BlockEditor'
 
 const PAGE_CATEGORIES = [
   'Character', 'Location', 'Event', 'Item', 'Organisation',
   'Concept', 'Timeline', 'Episode', 'Season', 'Driver',
   'Team', 'Circuit', 'Match', 'Other'
-]
-
-const RELATIONSHIP_TYPES = [
-  'appears_in', 'related_to', 'happened_at', 'ally_of',
-  'enemy_of', 'part_of', 'located_in', 'teammate_of'
 ]
 
 interface PageFormProps {
@@ -47,36 +43,6 @@ export default function PageForm({
       label: r.label || r.target_page_id
     })) || []
   )
-  
-  const [newRelTitle, setNewRelTitle] = useState('')
-  const [newRelType, setNewRelType] = useState('related_to')
-
-  const addRelationship = () => {
-    if (!newRelTitle.trim()) {
-      showToast('Please enter a page title', 'error')
-      return
-    }
-    
-    const match = existingPages.find(
-      p => p.title.toLowerCase() === newRelTitle.trim().toLowerCase()
-    )
-    
-    const targetPageId = match?.id || `pending-${Date.now()}`
-    
-    if (!match) {
-      showToast('Page not found, but relationship will be saved', 'info')
-    }
-    
-    setRelationships([
-      ...relationships,
-      { targetPageId, type: newRelType, label: newRelTitle.trim() }
-    ])
-    setNewRelTitle('')
-  }
-
-  const removeRelationship = (index: number) => {
-    setRelationships(relationships.filter((_, i) => i !== index))
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -170,7 +136,7 @@ export default function PageForm({
         await supabase
           .from('lores')
           .update({ 
-            page_count: existingPages.length + 1,
+            page_count: (existingPages?.length || 0) + 1,
             updated_at: new Date().toISOString()
           })
           .eq('id', loreId)
@@ -185,156 +151,70 @@ export default function PageForm({
     }
   }
 
-  const wordCount = content.trim().split(/\s+/).filter(Boolean).length
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
-      {/* Title */}
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Title *
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Walter White, Winterfell, The Battle of Blackwater..."
-          className="w-full px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40"
-          required
+    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FormInput 
+          label="Title *" 
+          value={title} 
+          onChange={(e) => setTitle(e.target.value)} 
+          placeholder="e.g. Walter White..." 
+          required 
         />
-      </div>
 
-      {/* Category */}
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Category
-        </label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40"
-        >
-          {PAGE_CATEGORIES.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Content */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="block text-sm font-medium">
-            Content
-          </label>
-          <span className="text-sm text-muted-foreground">{wordCount} words</span>
-        </div>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Start writing... Use ## for headings, **bold** for emphasis."
-          rows={12}
-          className="w-full px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40 font-mono"
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Supports Markdown: ## Heading, **bold**, *italic*, &gt; blockquote
-        </p>
-      </div>
-
-      {/* Image URL */}
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Image URL (optional)
-        </label>
-        <input
-          type="url"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="https://images.unsplash.com/..."
-          className="w-full px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40"
-        />
-      </div>
-
-      {/* Tags */}
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Tags (comma separated)
-        </label>
-        <input
-          type="text"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          placeholder="e.g. Protagonist, Chemistry, Albuquerque"
-          className="w-full px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40"
-        />
-      </div>
-
-      {/* Relationships */}
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Relationships
-        </label>
-        
-        {relationships.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-3">
-            {relationships.map((rel, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-1 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-sm"
-              >
-                <span>{rel.label}</span>
-                <span className="text-xs text-muted-foreground">({rel.type})</span>
-                <button
-                  type="button"
-                  onClick={() => removeRelationship(i)}
-                  className="ml-1 hover:text-destructive"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {existingPages.length > 0 && (
-          <p className="text-xs text-muted-foreground mb-2">
-            Existing pages: {existingPages.slice(0, 5).map(p => p.title).join(', ')}
-            {existingPages.length > 5 && ` +${existingPages.length - 5} more`}
-          </p>
-        )}
-
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newRelTitle}
-            onChange={(e) => setNewRelTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addRelationship())}
-            placeholder="Page title..."
-            className="flex-1 px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-          />
+        <div>
+          <label className="block text-sm font-medium mb-2">Category</label>
           <select
-            value={newRelType}
-            onChange={(e) => setNewRelType(e.target.value)}
-            className="px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full px-4 py-2 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/40"
           >
-            {RELATIONSHIP_TYPES.map(type => (
-              <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>
+            {PAGE_CATEGORIES.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={addRelationship}
-            className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
-      {/* Submit */}
+      <div className="border border-border rounded-xl p-6 bg-card/50">
+        <label className="block text-sm font-medium mb-4">Content</label>
+        <BlockEditor 
+          initialValue={content} 
+          onChange={(markdown) => setContent(markdown)} 
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <FormInput 
+          label="Image URL (optional)" 
+          type="url" 
+          value={imageUrl} 
+          onChange={(e) => setImageUrl(e.target.value)} 
+          placeholder="https://..." 
+        />
+
+        <FormInput 
+          label="Tags (comma separated)" 
+          value={tags} 
+          onChange={(e) => setTags(e.target.value)} 
+          placeholder="e.g. Protagonist, Chemistry" 
+        />
+      </div>
+
+      <div className="border border-border rounded-xl p-6 bg-card/50">
+        <RelationshipManager 
+          relationships={relationships}
+          existingPages={existingPages}
+          onAdd={(rel) => setRelationships([...relationships, rel])}
+          onRemove={(index) => setRelationships(relationships.filter((_, i) => i !== index))}
+          showToast={showToast}
+        />
+      </div>
+
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 disabled:opacity-50 ember-glow"
+        className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:opacity-90 disabled:opacity-50 ember-glow shadow-lg transition-all"
       >
         {loading ? 'Saving...' : (isEditing ? 'Save Changes' : 'Create Page')}
       </button>
