@@ -1,259 +1,288 @@
-import { useParams, Link } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ZoomIn, ZoomOut } from 'lucide-react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { ArrowLeft, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 
-type Node = {
-  id: string
-  title: string
+// ── Types ───────────────────────────────────────────────────────────────────
+interface GraphNode {
+  id:       string
+  title:    string
   category: string
-  slug: string
-  x: number
-  y: number
-  vx: number
-  vy: number
-  radius: number
+  slug:     string
+  x:        number
+  y:        number
+  vx:       number
+  vy:       number
+  radius:   number
 }
 
-type Edge = {
+interface GraphEdge {
   source: string
   target: string
-  type: string
-  label: string | null
+  type:   string
+  label:  string | null
 }
+
+interface LoreMeta {
+  id:    string
+  slug:  string
+  title: string
+}
+
+// ── Constants ────────────────────────────────────────────────────────────────
+const CANVAS_W = 800
+const CANVAS_H = 600
+const CENTER_X = CANVAS_W / 2
+const CENTER_Y = CANVAS_H / 2
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Character: '#C4A962',
-  Location: '#3A4F6E',
-  Event: '#6E4F3A',
-  Item: '#4A6E3A',
-  default: '#A0A0A0'
+  Character:    '#C4A962',
+  Location:     '#4A7FA5',
+  Event:        '#8B5BA5',
+  Item:         '#4A9A6A',
+  Organisation: '#A55B6A',
+  default:      '#606060',
 }
 
+// ── Force simulation helpers (pure, no setState inside rAF) ─────────────────
+function tick(nodes: GraphNode[], edges: GraphEdge[]): GraphNode[] {
+  const next = nodes.map(n => ({ ...n }))
+
+  // Repulsion
+  for (let i = 0; i < next.length; i++) {
+    for (let j = i + 1; j < next.length; j++) {
+      const dx   = next[j].x - next[i].x
+      const dy   = next[j].y - next[i].y
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1
+      const f    = 6000 / (dist * dist)
+      const fx   = (dx / dist) * f
+      const fy   = (dy / dist) * f
+      next[i].vx -= fx; next[i].vy -= fy
+      next[j].vx += fx; next[j].vy += fy
+    }
+  }
+
+  // Edge attraction
+  for (const edge of edges) {
+    const s = next.find(n => n.id === edge.source)
+    const t = next.find(n => n.id === edge.target)
+    if (!s || !t) continue
+    const dx   = t.x - s.x
+    const dy   = t.y - s.y
+    const dist = Math.sqrt(dx * dx + dy * dy) || 1
+    const f    = (dist - 150) * 0.005
+    const fx   = (dx / dist) * f
+    const fy   = (dy / dist) * f
+    s.vx += fx; s.vy += fy
+    t.vx -= fx; t.vy -= fy
+  }
+
+  // Gravity toward center
+  for (const n of next) {
+    n.vx += (CENTER_X - n.x) * 0.004
+    n.vy += (CENTER_Y - n.y) * 0.004
+    // Damping
+    n.vx *= 0.92
+    n.vy *= 0.92
+    n.x  = Math.max(40, Math.min(CANVAS_W - 40, n.x + n.vx))
+    n.y  = Math.max(40, Math.min(CANVAS_H - 40, n.y + n.vy))
+  }
+
+  return next
+}
+
+function drawGraph(
+  ctx:         CanvasRenderingContext2D,
+  nodes:       GraphNode[],
+  edges:       GraphEdge[],
+  hoveredId:   string | null,
+) {
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H)
+
+  // Edges
+  ctx.lineWidth = 1.5
+  ctx.setLineDash([4, 4])
+  for (const edge of edges) {
+    const s = nodes.find(n => n.id === edge.source)
+    const t = nodes.find(n => n.id === edge.target)
+    if (!s || !t) continue
+    const hot = hoveredId === s.id || hoveredId === t.id
+    ctx.strokeStyle  = hot ? '#C4A962' : '#2E2E2E'
+    ctx.globalAlpha  = hot ? 0.9 : 0.4
+    ctx.setLineDash(hot ? [] : [4, 4])
+    ctx.beginPath()
+    ctx.moveTo(s.x, s.y)
+    ctx.lineTo(t.x, t.y)
+    ctx.stroke()
+  }
+  ctx.setLineDash([])
+  ctx.globalAlpha = 1
+
+  // Nodes
+  for (const node of nodes) {
+    const color  = CATEGORY_COLORS[node.category] ?? CATEGORY_COLORS.default
+    const hot    = hoveredId === node.id
+    const r      = hot ? node.radius + 3 : node.radius
+
+    if (hot) {
+      ctx.shadowColor = color
+      ctx.shadowBlur  = 18
+    }
+
+    ctx.beginPath()
+    ctx.arc(node.x, node.y, r, 0, 2 * Math.PI)
+    ctx.fillStyle   = color
+    ctx.globalAlpha = hot ? 1 : 0.8
+    ctx.fill()
+
+    ctx.strokeStyle = '#1A1A1A'
+    ctx.lineWidth   = 2
+    ctx.stroke()
+    ctx.shadowBlur  = 0
+    ctx.globalAlpha = 1
+
+    // Label
+    const label = node.title.length > 16 ? node.title.slice(0, 13) + '…' : node.title
+    ctx.font      = hot ? 'bold 11px Inter, sans-serif' : '11px Inter, sans-serif'
+    ctx.fillStyle = hot ? '#E5E5E5' : '#909090'
+    ctx.textAlign = 'center'
+    ctx.fillText(label, node.x, node.y + r + 14)
+  }
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
 export default function GraphView() {
-  const { loreSlug } = useParams<{ loreSlug: string }>()
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [lore, setLore] = useState<any>(null)
-  const [nodes, setNodes] = useState<Node[]>([])
-  const [edges, setEdges] = useState<Edge[]>([])
+  const { loreSlug }     = useParams<{ loreSlug: string }>()
+  const navigate          = useNavigate()
+  const canvasRef         = useRef<HTMLCanvasElement>(null)
+  const nodesRef          = useRef<GraphNode[]>([])
+  const edgesRef          = useRef<GraphEdge[]>([])
+  const animRef           = useRef<number>(0)
+  const hoveredRef        = useRef<string | null>(null)
+
+  const [lore, setLore]       = useState<LoreMeta | null>(null)
   const [loading, setLoading] = useState(true)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
-  const [zoom, setZoom] = useState(1)
-  const animationRef = useRef<number>(0)
+  const [zoom, setZoom]       = useState(1)
+  const [nodeCount, setNodeCount] = useState(0)
+  const [edgeCount, setEdgeCount] = useState(0)
 
+  // ── Fetch ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (loreSlug) {
-      fetchData()
+    if (!loreSlug) return
+    let cancelled = false
+
+    async function fetchData() {
+      try {
+        const { data: loreData, error: le } = await supabase
+          .from('lores').select('id, slug, title').eq('slug', loreSlug).single()
+        if (le || !loreData) throw le ?? new Error('Lore not found')
+        if (!cancelled) setLore(loreData)
+
+        const { data: pages, error: pe } = await supabase
+          .from('pages').select('id, title, slug, category').eq('lore_id', loreData.id)
+        if (pe) throw pe
+
+        const { data: rels } = await supabase
+          .from('relationships')
+          .select('*')
+          .in('source_page_id', (pages ?? []).map(p => p.id))
+
+        if (cancelled) return
+
+        const initialNodes: GraphNode[] = (pages ?? []).map((p, i) => {
+          const angle = (i / (pages ?? []).length) * 2 * Math.PI
+          return {
+            id: p.id, title: p.title, category: p.category, slug: p.slug,
+            x:  CENTER_X + Math.cos(angle) * 180 * (0.7 + Math.random() * 0.6),
+            y:  CENTER_Y + Math.sin(angle) * 140 * (0.7 + Math.random() * 0.6),
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            radius: 18,
+          }
+        })
+
+        nodesRef.current = initialNodes
+        edgesRef.current = (rels ?? []).map(r => ({
+          source: r.source_page_id,
+          target: r.target_page_id,
+          type:   r.type,
+          label:  r.label,
+        }))
+        setNodeCount(initialNodes.length)
+        setEdgeCount(edgesRef.current.length)
+      } catch (err) {
+        console.error('GraphView fetch error:', err)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
+
+    fetchData()
+    return () => { cancelled = true }
   }, [loreSlug])
 
-  async function fetchData() {
-    try {
-      const { data: loreData } = await supabase
-        .from('lores')
-        .select('*')
-        .eq('slug', loreSlug)
-        .single()
-
-      if (!loreData) return
-      setLore(loreData)
-
-      const { data: pages } = await supabase
-        .from('pages')
-        .select('id, title, slug, category')
-        .eq('lore_id', loreData.id)
-
-      if (!pages) return
-
-      const { data: relationships } = await supabase
-        .from('relationships')
-        .select('*')
-        .in('source_page_id', pages.map(p => p.id))
-
-      const centerX = 400
-      const centerY = 300
-      const radius = 200
-
-      const initialNodes: Node[] = pages.map((page, i) => {
-        const angle = (i / pages.length) * 2 * Math.PI
-        return {
-          id: page.id,
-          title: page.title,
-          category: page.category,
-          slug: page.slug,
-          x: centerX + Math.cos(angle) * radius * (0.8 + Math.random() * 0.4),
-          y: centerY + Math.sin(angle) * radius * (0.8 + Math.random() * 0.4),
-          vx: (Math.random() - 0.5) * 2,
-          vy: (Math.random() - 0.5) * 2,
-          radius: 20
-        }
-      })
-
-      setNodes(initialNodes)
-      setEdges(relationships || [])
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
+  // ── Animation loop ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (nodes.length === 0) return
+    if (loading || nodesRef.current.length === 0) return
 
-    const simulate = () => {
-      setNodes(prevNodes => {
-        const newNodes = prevNodes.map(n => ({ ...n }))
-        const centerX = 400
-        const centerY = 300
-
-        for (let i = 0; i < newNodes.length; i++) {
-          for (let j = i + 1; j < newNodes.length; j++) {
-            const dx = newNodes[j].x - newNodes[i].x
-            const dy = newNodes[j].y - newNodes[i].y
-            const dist = Math.sqrt(dx * dx + dy * dy) || 1
-            const force = 5000 / (dist * dist)
-            
-            const fx = (dx / dist) * force
-            const fy = (dy / dist) * force
-            
-            newNodes[i].vx -= fx
-            newNodes[i].vy -= fy
-            newNodes[j].vx += fx
-            newNodes[j].vy += fy
-          }
-        }
-
-        for (const node of newNodes) {
-          const dx = centerX - node.x
-          const dy = centerY - node.y
-          node.vx += dx * 0.005
-          node.vy += dy * 0.005
-        }
-
-        for (const node of newNodes) {
-          node.vx *= 0.95
-          node.vy *= 0.95
-          node.x += node.vx
-          node.y += node.vy
-          node.x = Math.max(50, Math.min(750, node.x))
-          node.y = Math.max(50, Math.min(550, node.y))
-        }
-
-        return newNodes
-      })
-
-      animationRef.current = requestAnimationFrame(simulate)
-    }
-
-    animationRef.current = requestAnimationFrame(simulate)
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    }
-  }, [nodes.length])
-
-  useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas || nodes.length === 0) return
+    const ctx    = canvas?.getContext('2d')
+    if (!canvas || !ctx) return
 
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    let frame = 0
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    ctx.lineWidth = 1
-    for (const edge of edges) {
-      const source = nodes.find(n => n.id === edge.source)
-      const target = nodes.find(n => n.id === edge.target)
-      
-      if (source && target) {
-        const isHovered = hoveredNode === source.id || hoveredNode === target.id
-        ctx.strokeStyle = isHovered ? '#C4A962' : '#2A2A2A'
-        ctx.globalAlpha = isHovered ? 0.8 : 0.3
-        ctx.setLineDash(isHovered ? [] : [4, 4])
-        
-        ctx.beginPath()
-        ctx.moveTo(source.x, source.y)
-        ctx.lineTo(target.x, target.y)
-        ctx.stroke()
+    const loop = () => {
+      // Run simulation every frame, draw every frame
+      if (frame % 1 === 0) {
+        nodesRef.current = tick(nodesRef.current, edgesRef.current)
       }
+      drawGraph(ctx, nodesRef.current, edgesRef.current, hoveredRef.current)
+      frame++
+      animRef.current = requestAnimationFrame(loop)
     }
 
-    ctx.setLineDash([])
-    for (const node of nodes) {
-      const color = CATEGORY_COLORS[node.category] || CATEGORY_COLORS.default
-      const isHovered = hoveredNode === node.id
-      
-      if (isHovered) {
-        ctx.shadowColor = color
-        ctx.shadowBlur = 15
-      } else {
-        ctx.shadowBlur = 0
-      }
+    animRef.current = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(animRef.current)
+  }, [loading])
 
-      ctx.beginPath()
-      ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI)
-      ctx.fillStyle = color
-      ctx.globalAlpha = isHovered ? 1 : 0.7
-      ctx.fill()
-      ctx.strokeStyle = '#E5E5E5'
-      ctx.lineWidth = 2
-      ctx.stroke()
-
-      ctx.shadowBlur = 0
-      ctx.font = '12px Inter, sans-serif'
-      ctx.fillStyle = '#E5E5E5'
-      ctx.globalAlpha = 1
-      ctx.textAlign = 'center'
-      ctx.fillText(
-        node.title.length > 15 ? node.title.slice(0, 12) + '...' : node.title,
-        node.x,
-        node.y + node.radius + 18
-      )
-    }
-  }, [nodes, edges, hoveredNode])
-
-  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  // ── Mouse interaction (zoom-aware) ─────────────────────────────────────────
+  const getCanvasCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
-    if (!canvas) return
-
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-
-    const mouseX = (e.clientX - rect.left) * scaleX
-    const mouseY = (e.clientY - rect.top) * scaleY
-
-    let hovered = null
-    for (const node of nodes) {
-      const dx = mouseX - node.x
-      const dy = mouseY - node.y
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      
-      if (dist < node.radius + 10) {
-        hovered = node.id
-        break
-      }
+    if (!canvas) return { x: 0, y: 0 }
+    const rect   = canvas.getBoundingClientRect()
+    // Account for CSS zoom transform
+    return {
+      x: ((e.clientX - rect.left) / zoom) * (CANVAS_W / (rect.width / zoom)),
+      y: ((e.clientY - rect.top)  / zoom) * (CANVAS_H / (rect.height / zoom)),
     }
+  }, [zoom])
 
-    setHoveredNode(hovered)
-  }
-
-  const handleCanvasClick = () => {
-    if (!hoveredNode) return
-    
-    const node = nodes.find(n => n.id === hoveredNode)
-    if (node && lore) {
-      window.location.href = `/lore/${lore.slug}/${node.slug}`
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const { x, y } = getCanvasCoords(e)
+    let found: string | null = null
+    for (const node of nodesRef.current) {
+      const dx   = x - node.x
+      const dy   = y - node.y
+      if (Math.sqrt(dx * dx + dy * dy) < node.radius + 8) { found = node.id; break }
     }
-  }
+    hoveredRef.current = found
+    setHoveredNode(found)
+  }, [getCanvasCoords])
 
+  const handleClick = useCallback(() => {
+    const id   = hoveredRef.current
+    const node = nodesRef.current.find(n => n.id === id)
+    if (node && lore) navigate(`/lore/${lore.slug}/${node.slug}`)
+  }, [lore, navigate])
+
+  const resetZoom = () => setZoom(1)
+
+  // ── UI ─────────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <div className="text-[#C4A962]">Loading graph...</div>
+        <p className="text-[#C4A962] animate-pulse">Building graph…</p>
       </div>
     )
   }
@@ -262,8 +291,8 @@ export default function GraphView() {
     return (
       <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl text-[#E5E5E5] mb-4">Lore not found</h1>
-          <Link to="/" className="text-[#C4A962]">Return home</Link>
+          <h1 className="text-2xl font-serif text-[#E5E5E5] mb-4">Lore not found</h1>
+          <Link to="/" className="text-[#C4A962] hover:underline">Return home</Link>
         </div>
       </div>
     )
@@ -271,67 +300,89 @@ export default function GraphView() {
 
   return (
     <div className="min-h-screen bg-[#0F0F0F]">
-      <header className="sticky top-0 z-50 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-[#2A2A2A]">
-        <div className="px-6 py-4">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <Link 
-              to={`/lore/${lore.slug}`} 
-              className="flex items-center gap-2 text-[#A0A0A0] hover:text-[#E5E5E5] transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to {lore.title}</span>
-            </Link>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setZoom(z => Math.min(z + 0.2, 2))}
-                className="p-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg hover:bg-[#222]"
-              >
-                <ZoomIn className="w-4 h-4 text-[#A0A0A0]" />
-              </button>
-              <button
-                onClick={() => setZoom(z => Math.max(z - 0.2, 0.5))}
-                className="p-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg hover:bg-[#222]"
-              >
-                <ZoomOut className="w-4 h-4 text-[#A0A0A0]" />
-              </button>
-            </div>
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-[#0F0F0F]/90 backdrop-blur-md border-b border-[#2A2A2A]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <Link
+            to={`/lore/${lore.slug}`}
+            className="inline-flex items-center gap-2 text-[#A0A0A0] hover:text-[#E5E5E5] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">{lore.title}</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setZoom(z => Math.min(z + 0.2, 3))}
+              className="p-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg hover:bg-[#222] transition-colors">
+              <ZoomIn className="w-4 h-4 text-[#A0A0A0]" />
+            </button>
+            <button onClick={() => setZoom(z => Math.max(z - 0.2, 0.4))}
+              className="p-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg hover:bg-[#222] transition-colors">
+              <ZoomOut className="w-4 h-4 text-[#A0A0A0]" />
+            </button>
+            <button onClick={resetZoom}
+              className="p-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg hover:bg-[#222] transition-colors">
+              <RotateCcw className="w-4 h-4 text-[#A0A0A0]" />
+            </button>
           </div>
         </div>
       </header>
 
-      <div className="p-6">
-        <div className="relative border border-[#2A2A2A] rounded-xl overflow-hidden bg-[#1A1A1A] max-w-4xl mx-auto">
-          <canvas
-            ref={canvasRef}
-            width={800}
-            height={600}
-            className="w-full h-auto cursor-pointer"
-            style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
-            onMouseMove={handleCanvasMouseMove}
-            onClick={handleCanvasClick}
-          />
-          
-          <div className="absolute bottom-4 right-4 bg-[#1A1A1A]/90 backdrop-blur-sm border border-[#2A2A2A] rounded-lg p-3">
-            <h3 className="text-sm font-medium text-[#E5E5E5] mb-2">Categories</h3>
-            <div className="space-y-1">
-              {Object.entries(CATEGORY_COLORS).map(([cat, color]) => (
-                <div key={cat} className="flex items-center gap-2 text-xs text-[#A0A0A0]">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-                  <span>{cat}</span>
-                </div>
-              ))}
+      <div className="p-4 sm:p-6">
+        {/* Canvas container — zoom applied to the wrapper, not the canvas itself,
+            so mouse coordinates stay accurate */}
+        <div
+          className="relative border border-[#2A2A2A] rounded-2xl overflow-hidden bg-[#111] max-w-4xl mx-auto"
+          style={{ transformOrigin: 'top left' }}
+        >
+          <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.15s ease' }}>
+            <canvas
+              ref={canvasRef}
+              width={CANVAS_W}
+              height={CANVAS_H}
+              className="w-full h-auto block"
+              style={{ cursor: hoveredNode ? 'pointer' : 'default' }}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => { hoveredRef.current = null; setHoveredNode(null) }}
+              onClick={handleClick}
+            />
+          </div>
+
+          {/* Legend */}
+          <div className="absolute bottom-4 right-4 bg-[#0F0F0F]/90 backdrop-blur-sm border border-[#2A2A2A] rounded-xl p-3">
+            <p className="text-[10px] font-semibold text-[#606060] uppercase tracking-widest mb-2">Categories</p>
+            <div className="space-y-1.5">
+              {Object.entries(CATEGORY_COLORS)
+                .filter(([k]) => k !== 'default')
+                .map(([cat, color]) => (
+                  <div key={cat} className="flex items-center gap-2 text-xs text-[#A0A0A0]">
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                    {cat}
+                  </div>
+                ))}
             </div>
           </div>
 
-          <div className="absolute top-4 left-4 bg-[#1A1A1A]/90 backdrop-blur-sm border border-[#2A2A2A] rounded-lg p-3">
-            <div className="text-sm text-[#E5E5E5]">
-              <span className="font-medium">{nodes.length}</span> pages
-            </div>
-            <div className="text-sm text-[#E5E5E5]">
-              <span className="font-medium">{edges.length}</span> relationships
-            </div>
+          {/* Stats */}
+          <div className="absolute top-4 left-4 bg-[#0F0F0F]/90 backdrop-blur-sm border border-[#2A2A2A] rounded-xl p-3">
+            <p className="text-sm text-[#E5E5E5]">
+              <span className="font-bold text-[#C4A962]">{nodeCount}</span>
+              <span className="text-[#606060] ml-1">nodes</span>
+            </p>
+            <p className="text-sm text-[#E5E5E5]">
+              <span className="font-bold text-[#C4A962]">{edgeCount}</span>
+              <span className="text-[#606060] ml-1">edges</span>
+            </p>
+            {hoveredNode && (
+              <p className="text-xs text-[#C4A962] mt-1.5 border-t border-[#2A2A2A] pt-1.5">
+                Click to open →
+              </p>
+            )}
           </div>
         </div>
+
+        <p className="text-center text-xs text-[#404040] mt-3">
+          Click a node to open · Use zoom controls to explore
+        </p>
       </div>
     </div>
   )

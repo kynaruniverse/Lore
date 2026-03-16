@@ -1,83 +1,111 @@
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { FileText, Users, Eye, ArrowLeft } from 'lucide-react'
+import { FileText, Users, Eye, ArrowLeft, GitBranch, PlusCircle } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
-import FloatingCard from '../components/FloatingCard'
+import type { Lore, Page } from '../lib/loreStore'
 
-interface Lore {
-  id: string
-  slug: string
-  title: string
-  description: string
-  cover_image_url: string
-  hero_image_url: string
-  page_count: number
-  contributor_count: number
-  views: number
+const CATEGORY_COLORS: Record<string, string> = {
+  Character:    'bg-[#C4A962]/10 text-[#C4A962] border-[#C4A962]/20',
+  Location:     'bg-blue-500/10 text-blue-400 border-blue-500/20',
+  Event:        'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  Item:         'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  Organisation: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+  default:      'bg-[#2A2A2A] text-[#A0A0A0] border-[#3A3A3A]',
 }
 
-interface Page {
-  id: string
-  lore_id: string
-  slug: string
-  title: string
-  category: string
-  content: string
-  excerpt: string
-  image_url: string | null
-  tags: string[]
+function PageCard({ page, loreSlug, coverFallback }: {
+  page: Page
+  loreSlug: string
+  coverFallback: string
+}) {
+  const colorCls = CATEGORY_COLORS[page.category] ?? CATEGORY_COLORS.default
+
+  return (
+    <Link
+      to={`/lore/${loreSlug}/${page.slug}`}
+      className="group flex gap-4 p-4 bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl
+                 hover:border-[#C4A962]/30 transition-all"
+    >
+      <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-[#111]">
+        <img
+          src={page.image_url ?? coverFallback}
+          alt={page.title}
+          className="w-full h-full object-cover"
+          onError={e => { e.currentTarget.src = coverFallback }}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-xs px-2 py-0.5 rounded-full border ${colorCls}`}>
+            {page.category}
+          </span>
+        </div>
+        <h3 className="font-semibold text-[#E5E5E5] group-hover:text-[#C4A962] transition-colors truncate">
+          {page.title}
+        </h3>
+        {page.excerpt && (
+          <p className="text-xs text-[#606060] line-clamp-1 mt-0.5">{page.excerpt}</p>
+        )}
+      </div>
+    </Link>
+  )
 }
 
 export default function LoreHub() {
-  const { loreSlug } = useParams<{ loreSlug: string }>()
-  const [lore, setLore] = useState<Lore | null>(null)
+  const { loreSlug }  = useParams<{ loreSlug: string }>()
+  const navigate       = useNavigate()
+  const [lore, setLore]   = useState<Lore | null>(null)
   const [pages, setPages] = useState<Page[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeCategory, setActiveCategory] = useState<string>('All')
 
   useEffect(() => {
-    if (loreSlug) {
-      fetchLoreAndPages()
+    if (!loreSlug) return
+    let cancelled = false
+
+    async function fetchLoreAndPages() {
+      try {
+        const { data: loreData, error: le } = await supabase
+          .from('lores')
+          .select('*')
+          .eq('slug', loreSlug)
+          .single()
+        if (le || !loreData) throw le ?? new Error('Not found')
+        if (!cancelled) setLore(loreData)
+
+        const { data: pagesData, error: pe } = await supabase
+          .from('pages')
+          .select('*')
+          .eq('lore_id', loreData.id)
+          .order('title')
+        if (pe) throw pe
+        if (!cancelled) setPages(pagesData ?? [])
+      } catch (err) {
+        console.error('Error fetching lore:', err)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }
+
+    fetchLoreAndPages()
+    return () => { cancelled = true }
   }, [loreSlug])
 
-  async function fetchLoreAndPages() {
-    try {
-      setLoading(true)
-      
-      const { data: loreData } = await supabase
-        .from('lores')
-        .select('*')
-        .eq('slug', loreSlug)
-        .single()
+  const categories = ['All', ...Array.from(new Set(pages.map(p => p.category))).sort()]
 
-      if (!loreData) return
-      setLore(loreData)
-
-      const { data: pagesData } = await supabase
-        .from('pages')
-        .select('*')
-        .eq('lore_id', loreData.id)
-        .order('category')
-
-      setPages(pagesData || [])
-    } catch (error) {
-      console.error('Error fetching lore:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Group pages by category
-  const pagesByCategory = pages.reduce((acc, page) => {
-    if (!acc[page.category]) acc[page.category] = []
-    acc[page.category].push(page)
-    return acc
-  }, {} as Record<string, Page[]>)
+  const filtered = activeCategory === 'All'
+    ? pages
+    : pages.filter(p => p.category === activeCategory)
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
-        <div className="text-[#C4A962]">Loading...</div>
+      <div className="min-h-screen bg-[#0F0F0F]">
+        <div className="h-64 bg-[#1A1A1A] animate-pulse" />
+        <div className="max-w-4xl mx-auto px-4 py-8 space-y-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-20 bg-[#1A1A1A] rounded-xl animate-pulse" />
+          ))}
+        </div>
       </div>
     )
   }
@@ -86,104 +114,128 @@ export default function LoreHub() {
     return (
       <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl text-[#E5E5E5] mb-4">Lore not found</h1>
-          <Link to="/" className="text-[#C4A962]">Return home</Link>
+          <h1 className="text-2xl font-serif text-[#E5E5E5] mb-4">Lore not found</h1>
+          <Link to="/" className="text-[#C4A962] hover:underline">Return home</Link>
         </div>
       </div>
     )
   }
 
+  const coverImg = lore.hero_image_url || lore.cover_image_url
+
   return (
     <div className="min-h-screen bg-[#0F0F0F]">
-      {/* Header with back button */}
-      <header className="sticky top-0 z-50 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-[#2A2A2A]">
-        <div className="px-6 py-4">
-          <div className="max-w-7xl mx-auto">
-            <Link 
-              to="/" 
-              className="flex items-center gap-2 text-[#A0A0A0] hover:text-[#E5E5E5] transition-colors w-fit"
+      {/* Sticky back header */}
+      <header className="sticky top-0 z-50 bg-[#0F0F0F]/90 backdrop-blur-md border-b border-[#2A2A2A]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-[#A0A0A0] hover:text-[#E5E5E5] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">Discovery</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(`/lore/${loreSlug}/graph`)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#A0A0A0]
+                         bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg hover:border-[#C4A962]/40
+                         hover:text-[#C4A962] transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Discovery</span>
-            </Link>
+              <GitBranch className="w-3.5 h-3.5" /> Graph
+            </button>
+            <button
+              onClick={() => navigate(`/lore/${loreSlug}/create-page`)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#0F0F0F]
+                         bg-[#C4A962] rounded-lg hover:bg-[#B89A52] transition-colors font-medium"
+            >
+              <PlusCircle className="w-3.5 h-3.5" /> Add Page
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Hero section */}
-      <div className="relative h-64 md:h-80 overflow-hidden">
-        <img 
-          src={lore.hero_image_url || lore.cover_image_url}
-          alt={lore.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F]/60 to-transparent" />
-        
-        <div className="absolute bottom-0 left-0 right-0 p-6">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#E5E5E5] mb-2">
-              {lore.title}
-            </h1>
-            <p className="text-lg text-[#A0A0A0] max-w-2xl">
-              {lore.description}
-            </p>
-          </div>
+      {/* Hero */}
+      <div className="relative h-56 md:h-72 overflow-hidden">
+        <img src={coverImg} alt={lore.title} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F]/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-6 pb-6 max-w-7xl mx-auto">
+          <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#E5E5E5] mb-1">
+            {lore.title}
+          </h1>
+          <p className="text-sm text-[#A0A0A0] max-w-xl line-clamp-2">{lore.description}</p>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto mb-12">
-          <div className="text-center">
-            <FileText className="w-6 h-6 text-[#C4A962] mx-auto mb-2" />
-            <div className="text-2xl font-bold text-[#E5E5E5]">{lore.page_count || pages.length}</div>
-            <div className="text-sm text-[#A0A0A0]">Pages</div>
-          </div>
-          <div className="text-center">
-            <Users className="w-6 h-6 text-[#C4A962] mx-auto mb-2" />
-            <div className="text-2xl font-bold text-[#E5E5E5]">{lore.contributor_count}</div>
-            <div className="text-sm text-[#A0A0A0]">Contributors</div>
-          </div>
-          <div className="text-center">
-            <Eye className="w-6 h-6 text-[#C4A962] mx-auto mb-2" />
-            <div className="text-2xl font-bold text-[#E5E5E5]">{lore.views?.toLocaleString() || 0}</div>
-            <div className="text-sm text-[#A0A0A0]">Views</div>
+      <div className="border-b border-[#2A2A2A]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-6">
+          <span className="flex items-center gap-1.5 text-sm text-[#606060]">
+            <FileText className="w-4 h-4" />
+            <span className="text-[#E5E5E5] font-semibold">{lore.page_count ?? pages.length}</span> pages
+          </span>
+          <span className="flex items-center gap-1.5 text-sm text-[#606060]">
+            <Users className="w-4 h-4" />
+            <span className="text-[#E5E5E5] font-semibold">{lore.contributor_count ?? 0}</span> contributors
+          </span>
+          <span className="flex items-center gap-1.5 text-sm text-[#606060]">
+            <Eye className="w-4 h-4" />
+            <span className="text-[#E5E5E5] font-semibold">{(lore.views ?? 0).toLocaleString()}</span> views
+          </span>
+        </div>
+      </div>
+
+      {/* Category filter pills */}
+      {categories.length > 2 && (
+        <div className="border-b border-[#2A2A2A] overflow-x-auto">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex gap-2 w-max">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  activeCategory === cat
+                    ? 'bg-[#C4A962] text-[#0F0F0F] border-[#C4A962] font-semibold'
+                    : 'bg-[#1A1A1A] text-[#A0A0A0] border-[#2A2A2A] hover:border-[#3A3A3A]'
+                }`}
+              >
+                {cat}
+                {cat !== 'All' && (
+                  <span className="ml-1 opacity-60">
+                    {pages.filter(p => p.category === cat).length}
+                  </span>
+                )}
+              </button>
+            ))}
           </div>
         </div>
+      )}
 
-        {/* Pages by category */}
-        {Object.entries(pagesByCategory).map(([category, categoryPages]) => (
-          <div key={category} className="mb-12">
-            <h2 className="text-2xl font-serif font-bold text-[#E5E5E5] mb-6">
-              {category}
-              <span className="text-sm text-[#A0A0A0] ml-2">({categoryPages.length})</span>
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {categoryPages.map(page => (
-                <FloatingCard
-                  key={page.id}
-                  id={page.id}
-                  title={page.title}
-                  description={page.excerpt || page.content.slice(0, 100) + '...'}
-                  imageUrl={page.image_url || lore.cover_image_url}
-                  slug={`${lore.slug}/${page.slug}`}
-                  category={page.category}
-                />
-              ))}
-            </div>
+      {/* Pages list */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+        {filtered.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-[#505050] mb-4">No pages yet.</p>
+            <Link
+              to={`/lore/${loreSlug}/create-page`}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#C4A962] text-[#0F0F0F]
+                         rounded-xl font-semibold hover:bg-[#B89A52] transition-colors"
+            >
+              <PlusCircle className="w-4 h-4" /> Create first page
+            </Link>
           </div>
-        ))}
-
-        {/* Create page button */}
-        <div className="text-center mt-8">
-          <Link
-            to={`/lore/${lore.slug}/create-page`}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#C4A962] text-[#0F0F0F] rounded-xl font-medium hover:bg-[#B89A52] transition-colors"
-          >
-            + Add New Page
-          </Link>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {filtered.map(page => (
+              <PageCard
+                key={page.id}
+                page={page}
+                loreSlug={loreSlug!}
+                coverFallback={lore.cover_image_url}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
