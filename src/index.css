@@ -24,52 +24,17 @@
 }
 
 @layer utilities {
-  .perspective-1000 {
-    perspective: 1000px;
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
   }
   
-  .preserve-3d {
-    transform-style: preserve-3d;
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
-  
-  .backface-hidden {
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-  }
-  
-  .rotate-y-180 {
-    transform: rotateY(180deg);
-  }
-}
-
-/* Prose styles for markdown content */
-.prose {
-  color: var(--muted);
-  line-height: 1.7;
-}
-
-.prose p {
-  margin-bottom: 1rem;
-}
-
-.prose strong {
-  color: var(--foreground);
-  font-weight: 600;
-}
-
-.prose ul, .prose ol {
-  margin-bottom: 1rem;
-  padding-left: 1.5rem;
-}
-
-.prose li {
-  margin-bottom: 0.25rem;
-}
-
-.prose blockquote {
-  border-left: 4px solid var(--accent);
-  padding-left: 1rem;
-  font-style: italic;
-  color: var(--muted);
-  margin: 1rem 0;
 }
