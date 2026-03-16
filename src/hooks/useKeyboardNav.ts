@@ -1,33 +1,25 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+/**
+ * Global keyboard shortcuts:
+ *   /  → go to Search
+ *   c  → go to Create (without Ctrl/Cmd)
+ */
 export function useKeyboardNav() {
   const navigate = useNavigate()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if typing in an input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return
-      }
+      const tag = (e.target as HTMLElement).tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
 
-      switch (e.key) {
-        case '/':
-          e.preventDefault()
-          navigate('/search')
-          break
-        case 'c':
-          if (e.ctrlKey || e.metaKey) return
-          e.preventDefault()
-          navigate('/create')
-          break
-        case 'Escape':
-          // Handle escape - could close modals, etc.
-          break
-        case '?':
-          e.preventDefault()
-          // Show keyboard shortcuts help
-          break
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault()
+        navigate('/search')
+      } else if (e.key === 'c' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        navigate('/create')
       }
     }
 

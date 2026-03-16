@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
@@ -13,51 +13,57 @@ interface FloatingCardProps {
   category?: string
 }
 
-export default function FloatingCard({ 
-  title, 
-  description, 
-  imageUrl, 
-  slug, 
-  pageCount = 0, 
+// Stable random offset per card instance (computed once on mount via useRef)
+function useStableRandom(min: number, max: number) {
+  const ref = useRef<number | null>(null)
+  if (ref.current === null) ref.current = min + Math.random() * (max - min)
+  return ref.current
+}
+
+export default function FloatingCard({
+  title,
+  description,
+  imageUrl,
+  slug,
+  pageCount = 0,
   contributorCount = 0,
-  category 
+  category,
 }: FloatingCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
-  const randomOffset = Math.random() * 2 - 1
+  const rotateOffset = useStableRandom(-0.8, 0.8)
+  const duration    = useStableRandom(5, 7)
 
   const floatAnimation = {
-    y: [0, -8, 0],
-    rotate: [randomOffset * 0.3, randomOffset * 0.8, randomOffset * 0.3],
-    transition: {
-      duration: 5 + Math.random() * 2,
-      repeat: Infinity,
-      ease: "easeInOut"
-    }
+    y:       [0, -8, 0],
+    rotate:  [rotateOffset * 0.3, rotateOffset * 0.8, rotateOffset * 0.3],
+    transition: { duration, repeat: Infinity, ease: 'easeInOut' as const },
   }
 
+  const FALLBACK = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80'
+
   return (
-    <div className="relative w-full perspective-1000" style={{ minHeight: '380px' }}>
+    <div className="relative w-full" style={{ minHeight: 380, perspective: '1500px' }}>
       <motion.div
-        className="relative w-full h-full cursor-pointer preserve-3d"
+        className="relative w-full h-full cursor-pointer"
+        style={{ transformStyle: 'preserve-3d' }}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.5, type: "spring", stiffness: 200, damping: 15 }}
-        onClick={() => setIsFlipped(!isFlipped)}
+        transition={{ duration: 0.5, type: 'spring', stiffness: 200, damping: 15 }}
+        onClick={() => setIsFlipped(f => !f)}
       >
-        {/* Front of card */}
-        <motion.div 
-          className="absolute w-full h-full backface-hidden"
+        {/* ── Front ─────────────────────────────────── */}
+        <motion.div
+          className="absolute w-full h-full"
+          style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
           animate={!isFlipped ? floatAnimation : {}}
         >
-          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#222] rounded-2xl overflow-hidden border border-[#333] shadow-xl h-full">
+          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#222] rounded-2xl overflow-hidden border border-[#2A2A2A] shadow-xl h-full min-h-[380px]">
             <div className="relative h-48 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] to-transparent z-10" />
-              <img 
-                src={imageUrl} 
+              <img
+                src={imageUrl || FALLBACK}
                 alt={title}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&q=80'
-                }}
+                onError={e => { e.currentTarget.src = FALLBACK }}
               />
               {category && (
                 <span className="absolute top-3 right-3 z-20 px-3 py-1 bg-[#C4A962]/90 text-[#0F0F0F] text-xs font-semibold rounded-full">
@@ -66,67 +72,47 @@ export default function FloatingCard({
               )}
             </div>
             <div className="p-5">
-              <h3 className="text-xl font-serif font-bold text-[#E5E5E5] mb-2 line-clamp-1">
-                {title}
-              </h3>
-              <p className="text-sm text-[#A0A0A0] line-clamp-2">
-                {description}
-              </p>
+              <h3 className="text-xl font-serif font-bold text-[#E5E5E5] mb-2 line-clamp-1">{title}</h3>
+              <p className="text-sm text-[#A0A0A0] line-clamp-2">{description}</p>
+              <p className="text-xs text-[#606060] mt-3">Tap to flip</p>
             </div>
           </div>
         </motion.div>
 
-        {/* Back of card */}
-        <motion.div 
-          className="absolute w-full h-full backface-hidden rotate-y-180"
+        {/* ── Back ──────────────────────────────────── */}
+        <motion.div
+          className="absolute w-full h-full"
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg)',
+          }}
           animate={isFlipped ? floatAnimation : {}}
         >
-          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#222] rounded-2xl border border-[#333] shadow-xl p-6 flex flex-col h-full">
-            <h3 className="text-2xl font-serif font-bold text-[#E5E5E5] mb-3">
-              {title}
-            </h3>
-            <p className="text-sm text-[#A0A0A0] mb-6 flex-1">
-              {description}
-            </p>
+          <div className="bg-gradient-to-br from-[#1A1A1A] to-[#222] rounded-2xl border border-[#2A2A2A] shadow-xl p-6 flex flex-col min-h-[380px]">
+            <h3 className="text-2xl font-serif font-bold text-[#E5E5E5] mb-3">{title}</h3>
+            <p className="text-sm text-[#A0A0A0] mb-6 flex-1 line-clamp-4">{description}</p>
             <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-[#222] rounded-xl p-3 text-center">
+              <div className="bg-[#111] rounded-xl p-3 text-center border border-[#2A2A2A]">
                 <div className="text-2xl font-bold text-[#C4A962]">{pageCount}</div>
                 <div className="text-xs text-[#A0A0A0]">Pages</div>
               </div>
-              <div className="bg-[#222] rounded-xl p-3 text-center">
+              <div className="bg-[#111] rounded-xl p-3 text-center border border-[#2A2A2A]">
                 <div className="text-2xl font-bold text-[#C4A962]">{contributorCount}</div>
                 <div className="text-xs text-[#A0A0A0]">Contributors</div>
               </div>
             </div>
-            <Link 
+            <Link
               to={`/lore/${slug}`}
-              className="block w-full py-3 bg-[#C4A962] text-[#0F0F0F] text-center font-semibold rounded-xl hover:bg-[#B89A52] transition-all transform hover:scale-105 active:scale-95"
-              onClick={(e) => e.stopPropagation()}
+              className="block w-full py-3 bg-[#C4A962] text-[#0F0F0F] text-center font-semibold rounded-xl hover:bg-[#B89A52] active:scale-95 transition-all"
+              onClick={e => e.stopPropagation()}
             >
               Explore Universe →
             </Link>
-            <p className="text-center text-xs text-[#A0A0A0] mt-3">
-              Tap card to flip back
-            </p>
+            <p className="text-center text-xs text-[#606060] mt-3">Tap card to flip back</p>
           </div>
         </motion.div>
       </motion.div>
-
-      <style>{`
-        .perspective-1000 {
-          perspective: 1500px;
-        }
-        .preserve-3d {
-          transform-style: preserve-3d;
-        }
-        .backface-hidden {
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
-        }
-        .rotate-y-180 {
-          transform: rotateY(180deg);
-        }
-      `}</style>
     </div>
   )
 }

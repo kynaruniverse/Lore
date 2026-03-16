@@ -1,30 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
-import { Database } from './database.types'
+import type { Database } from './database.types'
 
-// Helper to get env variables in any environment
-const getEnvVar = (key: string): string => {
-  // Check for import.meta.env (Vite browser environment)
-  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
-    return import.meta.env[key]
-  }
-  
-  // Check for process.env (Node.js environment)
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return process.env[key]
-  }
-  
-  return ''
-}
-
-const supabaseUrl = getEnvVar('VITE_SUPABASE_URL')
-const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY')
-
-// Log for debugging (remove in production)
-console.log('Supabase URL:', supabaseUrl ? '✓' : '✗')
-console.log('Supabase Key:', supabaseAnonKey ? '✓' : '✗')
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+  throw new Error(
+    'Missing Supabase environment variables. ' +
+    'Ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your .env file.'
+  )
 }
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
