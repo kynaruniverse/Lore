@@ -55,3 +55,141 @@
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
+
+/* Improved prose styles for better readability */
+.prose {
+  @apply text-foreground/90 leading-relaxed;
+}
+
+.prose p {
+  @apply mb-4;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  @apply font-serif font-semibold text-foreground mt-8 mb-4;
+}
+
+.prose h1 { @apply text-3xl; }
+.prose h2 { @apply text-2xl; }
+.prose h3 { @apply text-xl; }
+.prose h4 { @apply text-lg; }
+
+.prose ul, .prose ol {
+  @apply pl-6 mb-4 space-y-1;
+}
+
+.prose ul {
+  @apply list-disc;
+}
+
+.prose ol {
+  @apply list-decimal;
+}
+
+.prose li {
+  @apply text-muted-foreground;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-primary pl-4 italic text-muted-foreground my-4;
+}
+
+.prose a {
+  @apply text-primary underline underline-offset-2 hover:opacity-80 transition-opacity;
+}
+
+.prose code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.prose pre {
+  @apply bg-muted p-4 rounded-lg overflow-x-auto mb-4;
+}
+
+.prose hr {
+  @apply border-border my-8;
+}
+
+/* Better spacing for content boxes */
+.content-section + .content-section {
+  @apply mt-8;
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-200;
+}
+
+/* Better focus states */
+:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+}
+
+/* Improved prose styles for better readability */
+.prose {
+  @apply text-foreground/90 leading-relaxed;
+}
+
+.prose p {
+  @apply mb-4;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  @apply font-serif font-semibold text-foreground mt-8 mb-4;
+}
+
+.prose h1 { @apply text-3xl; }
+.prose h2 { @apply text-2xl; }
+.prose h3 { @apply text-xl; }
+.prose h4 { @apply text-lg; }
+
+.prose ul, .prose ol {
+  @apply pl-6 mb-4 space-y-1;
+}
+
+.prose ul {
+  @apply list-disc;
+}
+
+.prose ol {
+  @apply list-decimal;
+}
+
+.prose li {
+  @apply text-muted-foreground;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-primary pl-4 italic text-muted-foreground my-4;
+}
+
+.prose a {
+  @apply text-primary underline underline-offset-2 hover:opacity-80 transition-opacity;
+}
+
+.prose code {
+  @apply bg-muted px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.prose pre {
+  @apply bg-muted p-4 rounded-lg overflow-x-auto mb-4;
+}
+
+.prose hr {
+  @apply border-border my-8;
+}
+
+/* Better spacing for content boxes */
+.content-section + .content-section {
+  @apply mt-8;
+}
+
+/* Smooth transitions */
+* {
+  @apply transition-colors duration-200;
+}
+
+/* Better focus states */
+:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+}

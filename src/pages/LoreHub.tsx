@@ -2,6 +2,8 @@ import { useParams, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { ArrowLeft, Plus, FileText, Users, Eye, AlertCircle, TrendingUp, Network } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
+import { ContentBox, ContentGrid, KnowledgeGapCard } from '../components/PageLayout'
+import { categoryConfig } from '../lib/contentConfig'
 
 interface Lore {
   id: string
@@ -51,11 +53,10 @@ export default function LoreHub() {
     try {
       setLoading(true)
       
-      // Fetch lore
       const { data: loreData, error: loreError } = await supabase
         .from('lores')
         .select('*')
-        .eq('slug', loreSlug || '')
+        .eq('slug', loreSlug)
         .single()
 
       if (loreError) throw loreError
@@ -63,7 +64,6 @@ export default function LoreHub() {
       
       setLore(loreData)
 
-      // Fetch pages for this lore
       const { data: pagesData, error: pagesError } = await supabase
         .from('pages')
         .select('*')
@@ -81,7 +81,6 @@ export default function LoreHub() {
     }
   }
 
-  // Group pages by category
   const pagesByCategory = pages.reduce((acc, page) => {
     if (!acc[page.category]) {
       acc[page.category] = []
@@ -96,14 +95,14 @@ export default function LoreHub() {
   if (loading) {
     return (
       <div className="container py-8">
-        <div className="animate-pulse space-y-4">
+        <div className="animate-pulse space-y-6">
           <div className="h-8 bg-border rounded w-32"></div>
           <div className="h-64 bg-border rounded"></div>
-          <div className="grid grid-cols-3 gap-4">
+          <ContentGrid cols={3}>
             <div className="h-20 bg-border rounded"></div>
             <div className="h-20 bg-border rounded"></div>
             <div className="h-20 bg-border rounded"></div>
-          </div>
+          </ContentGrid>
         </div>
       </div>
     )
@@ -123,7 +122,7 @@ export default function LoreHub() {
   return (
     <div className="container py-4 md:py-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <Link 
           to="/" 
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit"
@@ -133,15 +132,15 @@ export default function LoreHub() {
         </Link>
         
         <div className="flex items-center gap-2">
-          <Link to={`/lore/${lore.slug}/graph`} className="flex-1 sm:flex-none">
-            <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 border border-border rounded-lg text-sm hover:border-primary/40 transition-colors">
+          <Link to={`/lore/${lore.slug}/graph`}>
+            <button className="flex items-center gap-2 px-4 py-2.5 border border-border rounded-lg text-sm hover:border-primary/40 transition-colors">
               <Network className="w-4 h-4" />
               <span>Graph</span>
             </button>
           </Link>
           
-          <Link to={`/lore/${lore.slug}/create-page`} className="flex-1 sm:flex-none">
-            <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm hover:opacity-90 ember-glow">
+          <Link to={`/lore/${lore.slug}/create-page`}>
+            <button className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm hover:opacity-90 ember-glow">
               <Plus className="w-4 h-4" />
               <span>Add Page</span>
             </button>
@@ -150,7 +149,7 @@ export default function LoreHub() {
       </div>
 
       {/* Lore hero */}
-      <div className="relative rounded-xl overflow-hidden border border-border mb-6">
+      <div className="relative rounded-xl overflow-hidden border border-border mb-8">
         <div className="aspect-[2/1] sm:aspect-[3/1] md:aspect-[4/1]">
           <img 
             src={lore.hero_image_url || lore.cover_image_url} 
@@ -184,70 +183,72 @@ export default function LoreHub() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4 mb-8">
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-          <div className="flex items-center gap-2 md:gap-3">
-            <FileText className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0" />
-            <div className="min-w-0">
-              <div className="text-lg md:text-xl font-semibold">{lore.page_count || pages.length}</div>
-              <div className="text-xs md:text-sm text-muted-foreground truncate">Pages</div>
+      <ContentGrid cols={3} gap="md" className="mb-8">
+        <ContentBox variant="compact">
+          <div className="flex items-center gap-3">
+            <FileText className="w-5 h-5 text-primary shrink-0" />
+            <div>
+              <div className="text-xl font-semibold">{lore.page_count || pages.length}</div>
+              <div className="text-sm text-muted-foreground">Pages</div>
             </div>
           </div>
-        </div>
+        </ContentBox>
         
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-          <div className="flex items-center gap-2 md:gap-3">
-            <Users className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0" />
-            <div className="min-w-0">
-              <div className="text-lg md:text-xl font-semibold">{lore.contributor_count}</div>
-              <div className="text-xs md:text-sm text-muted-foreground truncate">Contributors</div>
+        <ContentBox variant="compact">
+          <div className="flex items-center gap-3">
+            <Users className="w-5 h-5 text-primary shrink-0" />
+            <div>
+              <div className="text-xl font-semibold">{lore.contributor_count}</div>
+              <div className="text-sm text-muted-foreground">Contributors</div>
             </div>
           </div>
-        </div>
+        </ContentBox>
         
-        <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-          <div className="flex items-center gap-2 md:gap-3">
-            <Eye className="w-4 h-4 md:w-5 md:h-5 text-primary shrink-0" />
-            <div className="min-w-0">
-              <div className="text-lg md:text-xl font-semibold">{lore.views?.toLocaleString() || 0}</div>
-              <div className="text-xs md:text-sm text-muted-foreground truncate">Views</div>
+        <ContentBox variant="compact">
+          <div className="flex items-center gap-3">
+            <Eye className="w-5 h-5 text-primary shrink-0" />
+            <div>
+              <div className="text-xl font-semibold">{lore.views?.toLocaleString() || 0}</div>
+              <div className="text-sm text-muted-foreground">Views</div>
             </div>
           </div>
-        </div>
-      </div>
+        </ContentBox>
+      </ContentGrid>
 
       {/* Knowledge gaps */}
       {incompletePages.length > 0 && (
-        <div className="mb-8 border-l-4 border-primary pl-3 md:pl-4 py-2 bg-primary/5 rounded-r-lg">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <AlertCircle className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold text-sm md:text-base">Knowledge Gaps</h2>
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <AlertCircle className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-serif font-semibold">Knowledge Gaps</h2>
             <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
               {incompletePages.length} need attention
             </span>
           </div>
           
-          <p className="text-xs md:text-sm text-muted-foreground mb-3">
-            These pages are missing information. Help complete them to strengthen this Lore.
-          </p>
-          
-          <div className="flex flex-wrap gap-2">
-            {incompletePages.slice(0, 5).map(page => (
-              <Link 
-                key={page.id} 
-                to={`/lore/${lore.slug}/${page.slug}`}
-                className="px-2 md:px-3 py-1 bg-card border border-border rounded-full text-xs hover:border-primary/40 transition-colors"
-              >
-                {page.title} <span className="text-primary ml-1">{page.completeness}%</span>
+          <ContentGrid cols={3} gap="md">
+            {incompletePages.slice(0, 3).map(page => (
+              <Link key={page.id} to={`/lore/${lore.slug}/${page.slug}`}>
+                <ContentBox variant="compact" className="hover:border-primary/40 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-medium">{page.title}</h3>
+                    <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                      {page.completeness}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {page.excerpt || 'Missing information'}
+                  </p>
+                </ContentBox>
               </Link>
             ))}
-          </div>
+          </ContentGrid>
         </div>
       )}
 
       {/* Pages by category */}
       {categories.length === 0 ? (
-        <div className="text-center py-12 bg-card border border-border rounded-xl">
+        <ContentBox className="text-center py-12">
           <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-medium mb-2">No pages yet</h3>
           <p className="text-sm text-muted-foreground mb-4">Be the first to add a page to this Lore</p>
@@ -256,27 +257,30 @@ export default function LoreHub() {
               Add your first page
             </button>
           </Link>
-        </div>
+        </ContentBox>
       ) : (
         categories.map(category => (
           <section key={category} className="mb-8">
-            <h2 className="text-lg md:text-xl font-serif font-semibold mb-3 md:mb-4 flex items-center gap-2">
+            <h2 className="text-lg md:text-xl font-serif font-semibold mb-4 flex items-center gap-2">
+              <span style={{ color: categoryConfig[category as keyof typeof categoryConfig]?.color }}>
+                {categoryConfig[category as keyof typeof categoryConfig]?.icon || '📄'}
+              </span>
               {category}
               <span className="text-sm text-muted-foreground font-normal">
                 ({pagesByCategory[category].length})
               </span>
             </h2>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            <ContentGrid cols={3} gap="md">
               {pagesByCategory[category].map(page => (
                 <Link key={page.id} to={`/lore/${lore.slug}/${page.slug}`}>
-                  <div className="bg-card border border-border rounded-xl p-3 md:p-4 hover:border-primary/40 transition-colors h-full">
+                  <ContentBox className="h-full hover:border-primary/40 transition-colors">
                     <div className="flex flex-col h-full">
-                      <h3 className="font-serif font-semibold text-sm md:text-base mb-2 line-clamp-2">
+                      <h3 className="font-serif font-semibold text-base mb-2 line-clamp-2">
                         {page.title}
                       </h3>
                       
-                      <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">
                         {page.excerpt || page.content.slice(0, 100) + '...'}
                       </p>
                       
@@ -289,8 +293,7 @@ export default function LoreHub() {
                           ))}
                         </div>
                         
-                        {/* Completeness ring */}
-                        <div className="relative w-8 h-8 shrink-0">
+                        <div className="relative w-8 h-8">
                           <svg className="w-full h-full -rotate-90">
                             <circle
                               cx="16"
@@ -319,10 +322,10 @@ export default function LoreHub() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </ContentBox>
                 </Link>
               ))}
-            </div>
+            </ContentGrid>
           </section>
         ))
       )}

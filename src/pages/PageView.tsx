@@ -2,8 +2,10 @@ import { useParams, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
-import { Edit, Eye, Calendar, AlertCircle } from 'lucide-react'
+import { Edit, Eye, Calendar, ArrowLeft } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
+import { ContentSection, ContentBox, ContentGrid, KnowledgeGapCard } from '../components/PageLayout'
+import { categoryConfig } from '../lib/contentConfig'
 
 interface Page {
   id: string
@@ -61,36 +63,32 @@ export default function PageView() {
     try {
       setLoading(true)
       
-      // Fetch lore first
       const { data: loreData, error: loreError } = await supabase
         .from('lores')
         .select('id, slug, title, cover_image_url')
-        .eq('slug', loreSlug || '')
+        .eq('slug', loreSlug)
         .single()
-      
+
       if (loreError) throw loreError
       if (!loreData) return
       setLore(loreData)
 
-      // Fetch page
       const { data: pageData, error: pageError } = await supabase
         .from('pages')
         .select('*')
         .eq('lore_id', loreData.id)
-        .eq('slug', pageSlug || '')
+        .eq('slug', pageSlug)
         .single()
-      
+
       if (pageError) throw pageError
       if (!pageData) return
       setPage(pageData)
 
-      // Increment view count
       await supabase
         .from('pages')
         .update({ views: (pageData.views || 0) + 1 })
         .eq('id', pageData.id)
 
-      // Fetch relationships with target page details
       const { data: relData, error: relError } = await supabase
         .from('relationships')
         .select(`
@@ -110,7 +108,6 @@ export default function PageView() {
       if (relError) throw relError
       
       if (relData) {
-        // Transform the data to match our Relationship interface
         const formattedRelationships = relData.map((rel: any) => ({
           ...rel,
           target_page: Array.isArray(rel.target_page) ? rel.target_page[0] : rel.target_page
@@ -124,17 +121,53 @@ export default function PageView() {
     }
   }
 
+  // Parse markdown content into sections
+  const parseContentIntoSections = (content: string) => {
+    const lines = content.split('\n')
+    const sections: { title: string; content: string[] }[] = []
+    let currentSection: { title: string; content: string[] } | null = null
+
+    lines.forEach(line => {
+      if (line.startsWith('## ')) {
+        if (currentSection) {
+          sections.push(currentSection)
+        }
+        currentSection = {
+          title: line.replace('## ', '').trim(),
+          content: []
+        }
+      } else if (currentSection) {
+        currentSection.content.push(line)
+      }
+    })
+
+    if (currentSection) {
+      sections.push(currentSection)
+    }
+
+    return sections
+  }
+
   if (loading) {
     return (
-      <div className="text-center py-12">
-        <div className="animate-pulse">Loading page...</div>
+      <div className="container py-12">
+        <div className="animate-pulse space-y-6 max-w-4xl mx-auto">
+          <div className="h-8 bg-border rounded w-32"></div>
+          <div className="h-12 bg-border rounded w-3/4"></div>
+          <div className="h-64 bg-border rounded"></div>
+          <div className="space-y-4">
+            <div className="h-4 bg-border rounded w-full"></div>
+            <div className="h-4 bg-border rounded w-full"></div>
+            <div className="h-4 bg-border rounded w-2/3"></div>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!page || !lore) {
     return (
-      <div className="text-center py-12">
+      <div className="container py-16 text-center">
         <h1 className="text-2xl font-bold mb-4">Page not found</h1>
         <Link to={`/lore/${loreSlug}`} className="text-primary hover:underline">
           Back to Lore
@@ -143,9 +176,12 @@ export default function PageView() {
     )
   }
 
+  const sections = parseContentIntoSections(page.content)
+  const categoryInfo = categoryConfig[page.category as keyof typeof categoryConfig] || categoryConfig.Other
+
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Breadcrumb and Edit */}
+    <div className="container max-w-5xl py-4 md:py-6">
+      {/* Breadcrumb */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2 text-sm">
           <Link to="/" className="text-muted-foreground hover:text-foreground">
@@ -156,7 +192,7 @@ export default function PageView() {
             {lore.title}
           </Link>
           <span className="text-muted-foreground">/</span>
-          <span className="text-foreground">{page.title}</span>
+          <span className="text-foreground font-medium">{page.title}</span>
         </div>
         
         <Link
@@ -164,14 +200,21 @@ export default function PageView() {
           className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-lg text-sm hover:border-primary/40 transition-colors"
         >
           <Edit className="w-4 h-4" />
-          Edit
+          <span className="hidden sm:inline">Edit</span>
         </Link>
       </div>
 
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="px-2 py-1 bg-primary/20 text-primary text-xs rounded-full">
+          <span 
+            className="px-2 py-1 text-xs rounded-full"
+            style={{ 
+              backgroundColor: `${categoryInfo.color}20`,
+              color: categoryInfo.color 
+            }}
+          >
+            <span className="mr-1">{categoryInfo.icon}</span>
             {page.category}
           </span>
           {page.tags?.map(tag => (
@@ -181,12 +224,12 @@ export default function PageView() {
           ))}
         </div>
         
-        <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 leading-tight">
           {page.title}
         </h1>
         
         {page.excerpt && (
-          <p className="text-lg text-muted-foreground border-l-4 border-primary pl-4">
+          <p className="text-lg md:text-xl text-muted-foreground italic border-l-4 border-primary pl-4">
             {page.excerpt}
           </p>
         )}
@@ -215,65 +258,68 @@ export default function PageView() {
         </div>
       )}
 
-      {/* Main content */}
-      <div className="prose prose-invert max-w-none mb-12">
-        <ReactMarkdown rehypePlugins={[rehypeSanitize]}>
-          {page.content}
-        </ReactMarkdown>
+      {/* Main content with beautiful sections */}
+      <div className="mb-12 space-y-8">
+        {sections.map((section, index) => (
+          <ContentSection key={index} title={section.title}>
+            <ReactMarkdown 
+              rehypePlugins={[rehypeSanitize]}
+              components={{
+                p: ({node, ...props}) => <p className="mb-4 leading-relaxed" {...props} />,
+                strong: ({node, ...props}) => <strong className="font-bold text-foreground" {...props} />,
+                em: ({node, ...props}) => <em className="italic text-muted-foreground" {...props} />,
+                ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 space-y-1" {...props} />,
+                ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-4 space-y-1" {...props} />,
+                li: ({node, ...props}) => <li className="text-muted-foreground" {...props} />,
+                blockquote: ({node, ...props}) => (
+                  <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground my-4" {...props} />
+                ),
+              }}
+            >
+              {section.content.join('\n')}
+            </ReactMarkdown>
+          </ContentSection>
+        ))}
       </div>
 
-      {/* Knowledge gaps */}
-      {page.missing_fields && page.missing_fields.length > 0 && (
-        <div className="mb-8 border-l-4 border-primary pl-4 py-2 bg-primary/5 rounded-r-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertCircle className="w-4 h-4 text-primary" />
-            <h2 className="font-semibold">Knowledge Gaps</h2>
-            <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
-              {page.completeness}% complete
-            </span>
-          </div>
-          
-          <p className="text-sm text-muted-foreground mb-2">
-            This page is missing the following information:
-          </p>
-          
-          <ul className="list-disc list-inside text-sm text-muted-foreground">
-            {page.missing_fields.map((field, i) => (
-              <li key={i}>{field}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* Knowledge gaps - cleaner design */}
+      <KnowledgeGapCard 
+        missingFields={page.missing_fields} 
+        completeness={page.completeness}
+        className="mb-8"
+      />
 
-      {/* Relationships */}
+      {/* Relationships - as cards */}
       {relationships.length > 0 && (
         <div className="border-t border-border pt-8">
-          <h2 className="text-xl font-serif font-semibold mb-4">Relationships</h2>
+          <h2 className="text-xl md:text-2xl font-serif font-semibold mb-6">Relationships</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ContentGrid cols={2} gap="md">
             {relationships.map((rel, i) => (
               <Link
                 key={i}
                 to={`/lore/${lore.slug}/${rel.target_page.slug}`}
-                className="lore-card p-4 hover:border-primary/40 transition-colors"
+                className="group"
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-1 h-1 mt-2 rounded-full bg-primary" />
-                  <div>
-                    <h3 className="font-medium hover:text-primary transition-colors">
-                      {rel.target_page.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {rel.label || rel.type.replace(/_/g, ' ')}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {rel.target_page.category}
-                    </p>
+                <ContentBox variant="compact" className="hover:border-primary/40 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="w-1 h-8 bg-primary rounded-full mt-1" />
+                    <div className="flex-1">
+                      <h3 className="font-medium group-hover:text-primary transition-colors">
+                        {rel.target_page.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {rel.label || rel.type.replace(/_/g, ' ')}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {rel.target_page.category}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </ContentBox>
               </Link>
             ))}
-          </div>
+          </ContentGrid>
         </div>
       )}
     </div>
