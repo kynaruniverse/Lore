@@ -1,107 +1,118 @@
 import { Link } from 'react-router-dom'
-import { Flame, TrendingUp, FileText, Users } from 'lucide-react'
-import { useLores } from '../lib/loreStore'
+import { useState, useEffect } from 'react'
+import { Search, Flame } from 'lucide-react'
+import { supabase } from '../lib/supabaseClient'
+import FlipCard from '../components/FlipCard'
+
+interface Lore {
+  id: string
+  slug: string
+  title: string
+  description: string
+  category: string
+  cover_image_url: string
+  tags: string[]
+  trending: boolean
+}
 
 export default function Home() {
-  const { lores, loading } = useLores()
-  const trendingLores = lores.filter(l => l.trending).slice(0, 3)
+  const [lores, setLores] = useState<Lore[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchLores()
+  }, [])
+
+  async function fetchLores() {
+    try {
+      const { data } = await supabase
+        .from('lores')
+        .select('*')
+        .order('title')
+      
+      setLores(data || [])
+    } catch (error) {
+      console.error('Error fetching lores:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (loading) {
     return (
-      <div className="text-center py-12">
-        <div className="animate-pulse">Loading...</div>
+      <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
+        <div className="animate-pulse text-[#C4A962]">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-12">
-      {/* Hero */}
-      <div className="max-w-3xl mx-auto text-center py-12">
-        <div className="flex justify-center mb-8">
-          <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center ember-glow">
-            <Flame className="w-10 h-10 text-primary" />
+    <div className="min-h-screen bg-[#0F0F0F]">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-[#0F0F0F]/80 backdrop-blur-md border-b border-[#2A2A2A]">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Flame className="w-6 h-6 text-[#C4A962]" />
+              <h1 className="text-2xl font-serif font-bold text-[#E5E5E5]">Lore</h1>
+            </div>
+            <Link to="/search">
+              <button className="p-2 hover:bg-[#2A2A2A] rounded-lg transition-colors">
+                <Search className="w-5 h-5 text-[#A0A0A0]" />
+              </button>
+            </Link>
           </div>
         </div>
-        
-        <h1 className="text-5xl md:text-6xl font-bold mb-6 font-serif">
-          Every story worth
-          <br />
-          <span className="text-primary">remembering.</span>
-        </h1>
-        
-        <p className="text-lg text-muted-foreground mb-10">
-          Communities collaboratively document the things they love — games, shows, films,
-          sports, and fictional worlds — in one connected knowledge graph.
-        </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
-          <Link
-            to="/create"
-            className="px-8 py-4 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 ember-glow"
-          >
-            Start a Lore
-          </Link>
-          <Link
-            to="/search"
-            className="px-8 py-4 border border-border rounded-lg font-medium hover:border-primary/40"
-          >
-            Explore Knowledge
-          </Link>
-          {/* New 3D Experience Button */}
-          <Link
-            to="/3d"
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:opacity-90 transition-opacity shadow-lg hover:shadow-purple-500/25"
-          >
-            🌌 Experience in 3D
-          </Link>
-        </div>
-      </div>
+      </header>
 
-      {/* Trending Lores */}
-      {trendingLores.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-6">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h2 className="text-2xl font-serif font-semibold">Trending Lores</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trendingLores.map((lore) => (
-              <Link key={lore.id} to={`/lore/${lore.slug}`}>
-                <div className="lore-card overflow-hidden group">
-                  <div className="relative h-48">
-                    <img 
-                      src={lore.cover_image_url} 
-                      alt={lore.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-serif font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
-                      {lore.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {lore.description}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <FileText className="w-3 h-3" />
-                        {lore.page_count} pages
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3 h-3" />
-                        {lore.contributor_count}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+      {/* Main content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl font-serif font-bold text-[#E5E5E5] mb-2">Discover</h2>
+          <p className="text-[#A0A0A0] mb-8">Explore knowledge universes</p>
+
+          {/* Card grid - 2 columns on mobile, 3 on tablet, 4 on desktop */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {lores.map((lore) => (
+              <FlipCard
+                key={lore.id}
+                id={lore.id}
+                title={lore.title}
+                imageUrl={lore.cover_image_url}
+                description={lore.description}
+                loreSlug={lore.slug}
+                type="lore"
+                category={lore.category}
+                tags={lore.tags}
+              />
             ))}
           </div>
-        </section>
-      )}
+        </div>
+      </main>
+
+      {/* Bottom navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#1A1A1A] border-t border-[#2A2A2A] py-2 px-4">
+        <div className="container mx-auto max-w-md">
+          <div className="flex justify-around items-center">
+            <Link to="/" className="flex flex-col items-center gap-1">
+              <Flame className="w-5 h-5 text-[#C4A962]" />
+              <span className="text-xs text-[#C4A962]">Home</span>
+            </Link>
+            <Link to="/search" className="flex flex-col items-center gap-1">
+              <Search className="w-5 h-5 text-[#A0A0A0]" />
+              <span className="text-xs text-[#A0A0A0]">Search</span>
+            </Link>
+            <Link to="/create" className="flex flex-col items-center gap-1">
+              <div className="w-10 h-10 rounded-full bg-[#C4A962] flex items-center justify-center">
+                <span className="text-[#0F0F0F] text-xl font-bold">+</span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Spacer for bottom nav */}
+      <div className="h-20" />
     </div>
   )
 }
