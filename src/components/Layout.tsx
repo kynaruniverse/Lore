@@ -1,64 +1,74 @@
 import React from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Home, Search, PlusCircle } from 'lucide-react'
+import { Link, useLocation } from 'react-router-dom'
+import { Home, Search, PlusCircle } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 interface LayoutProps {
   children: React.ReactNode
-  showBackButton?: boolean
-  backTo?: string
-  backLabel?: string
 }
 
 const NAV_ITEMS = [
-  { to: '/',       icon: Home,       label: 'Home'   },
-  { to: '/search', icon: Search,     label: 'Search' },
-  { to: '/create', icon: PlusCircle, label: 'Create' },
+  { to: '/',       icon: Home,       label: 'Home',   match: (p: string) => p === '/'                    },
+  { to: '/search', icon: Search,     label: 'Search', match: (p: string) => p.startsWith('/search')      },
+  { to: '/create', icon: PlusCircle, label: 'Create', match: (p: string) => p.startsWith('/create')      },
 ]
 
-export default function Layout({
-  children,
-  showBackButton = false,
-  backTo = '/',
-  backLabel = 'Back',
-}: LayoutProps) {
-  const location = useLocation()
+export default function Layout({ children }: LayoutProps) {
+  const { pathname } = useLocation()
 
   return (
     <div className="min-h-screen bg-[#0F0F0F]">
-      {/* Top bar — back button variant */}
-      {showBackButton && (
-        <header className="sticky top-0 z-50 bg-[#0F0F0F]/90 backdrop-blur-md border-b border-[#2A2A2A]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-            <Link
-              to={backTo}
-              className="inline-flex items-center gap-2 text-[#A0A0A0] hover:text-[#E5E5E5] transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="text-sm font-medium">{backLabel}</span>
-            </Link>
-          </div>
-        </header>
-      )}
-
       <main className="pb-24">{children}</main>
 
-      {/* Bottom navigation bar */}
+      {/* Bottom navigation */}
       <nav className="fixed bottom-0 inset-x-0 z-50 bg-[#0F0F0F]/95 backdrop-blur-xl border-t border-[#2A2A2A]">
-        <div className="max-w-sm mx-auto flex items-center justify-around px-4 py-3">
-          {NAV_ITEMS.map(({ to, icon: Icon, label }) => {
-            const active = location.pathname === to
+        <div className="max-w-sm mx-auto flex items-center justify-around px-2 py-2">
+          {NAV_ITEMS.map(({ to, icon: Icon, label, match }) => {
+            const active = match(pathname)
             return (
               <Link
                 key={to}
                 to={to}
-                className={`flex flex-col items-center gap-1 px-4 py-1 rounded-xl transition-all ${
-                  active
-                    ? 'text-[#C4A962]'
-                    : 'text-[#606060] hover:text-[#A0A0A0]'
-                }`}
+                className="relative flex flex-col items-center gap-1 px-5 py-1.5 rounded-xl"
               >
-                <Icon className={`w-5 h-5 transition-transform ${active ? 'scale-110' : ''}`} />
-                <span className="text-[10px] font-medium tracking-wide uppercase">{label}</span>
+                {/* Tap ripple */}
+                <motion.div
+                  className="absolute inset-0 rounded-xl bg-[#C4A962]/10"
+                  initial={false}
+                  whileTap={{ opacity: 1, scale: 1 }}
+                  animate={{ opacity: 0, scale: 0.85 }}
+                  transition={{ duration: 0.3 }}
+                />
+
+                {/* Icon */}
+                <motion.div
+                  animate={active ? { y: -2, scale: 1.15 } : { y: 0, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                >
+                  <Icon
+                    className={`w-5 h-5 transition-colors duration-200 ${
+                      active ? 'text-[#C4A962]' : 'text-[#606060]'
+                    }`}
+                  />
+                </motion.div>
+
+                {/* Label */}
+                <span
+                  className={`text-[10px] font-medium tracking-wide uppercase transition-colors duration-200 ${
+                    active ? 'text-[#C4A962]' : 'text-[#505050]'
+                  }`}
+                >
+                  {label}
+                </span>
+
+                {/* Active dot indicator */}
+                {active && (
+                  <motion.div
+                    layoutId="nav-dot"
+                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#C4A962]"
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  />
+                )}
               </Link>
             )
           })}

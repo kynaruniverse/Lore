@@ -4,11 +4,45 @@ import { Search, Sparkles, PlusCircle } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import FloatingCard from '../components/FloatingCard'
 import { motion } from 'framer-motion'
+import { useTheme } from '../contexts/ThemeContext'
 import type { Lore } from '../lib/loreStore'
+
+const MotionLink = motion(Link)
+
+// ── Contrast circle icon — geometric half-fill representing light/dark ────────
+function ContrastIcon({ isDark }: { isDark: boolean }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      {/* Full circle outline */}
+      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+      {/* Half fill — left side filled when dark, right side when light */}
+      <motion.path
+        d={isDark
+          ? "M8 1 A7 7 0 0 0 8 15 Z"   // left half filled = dark mode
+          : "M8 1 A7 7 0 0 1 8 15 Z"    // right half filled = light mode
+        }
+        fill="currentColor"
+        initial={false}
+        animate={{ rotate: isDark ? 0 : 180 }}
+        transition={{ duration: 0.4, ease: 'easeInOut' }}
+        style={{ transformOrigin: '8px 8px' }}
+      />
+    </svg>
+  )
+}
 
 export default function Home() {
   const [lores, setLores]     = useState<Lore[]>([])
   const [loading, setLoading] = useState(true)
+  const { theme, toggleTheme } = useTheme()
+  const isDark = theme === 'dark'
 
   useEffect(() => {
     let cancelled = false
@@ -64,24 +98,36 @@ export default function Home() {
           </motion.div>
 
           <div className="flex items-center gap-2">
-            <Link to="/search">
-              <motion.button
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                className="p-2.5 bg-[#1A1A1A] hover:bg-[#222] rounded-xl border border-[#2A2A2A] transition-colors"
-                aria-label="Search"
-              >
-                <Search className="w-4 h-4 text-[#A0A0A0]" />
-              </motion.button>
-            </Link>
-            <Link to="/create">
-              <motion.button
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                className="p-2.5 bg-[#C4A962] hover:bg-[#B89A52] rounded-xl transition-colors"
-                aria-label="Create lore"
-              >
-                <PlusCircle className="w-4 h-4 text-[#0F0F0F]" />
-              </motion.button>
-            </Link>
+            {/* Theme toggle */}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleTheme}
+              className="p-2.5 bg-[#1A1A1A] hover:bg-[#222] rounded-xl border border-[#2A2A2A] transition-colors text-[#A0A0A0] hover:text-[#E5E5E5]"
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              <ContrastIcon isDark={isDark} />
+            </motion.button>
+
+            <MotionLink
+              to="/search"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2.5 bg-[#1A1A1A] hover:bg-[#222] rounded-xl border border-[#2A2A2A] transition-colors inline-flex items-center justify-center"
+              aria-label="Search"
+            >
+              <Search className="w-4 h-4 text-[#A0A0A0]" />
+            </MotionLink>
+
+            <MotionLink
+              to="/create"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2.5 bg-[#C4A962] hover:bg-[#B89A52] rounded-xl transition-colors inline-flex items-center justify-center"
+              aria-label="Create lore"
+            >
+              <PlusCircle className="w-4 h-4 text-[#0F0F0F]" />
+            </MotionLink>
           </div>
         </div>
       </header>
@@ -107,7 +153,11 @@ export default function Home() {
         {loading ? (
           <div className="space-y-6">
             {[1, 2, 3].map(i => (
-              <div key={i} className="rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] animate-pulse" style={{ minHeight: 380 }} />
+              <div
+                key={i}
+                className="rounded-2xl bg-[#1A1A1A] border border-[#2A2A2A] animate-pulse"
+                style={{ minHeight: 400 }}
+              />
             ))}
           </div>
         ) : lores.length === 0 ? (
@@ -132,7 +182,7 @@ export default function Home() {
                 <FloatingCard
                   id={lore.id}
                   title={lore.title}
-                  description={lore.description}
+                  description={lore.description ?? ''}
                   imageUrl={lore.cover_image_url}
                   slug={lore.slug}
                   pageCount={lore.page_count}

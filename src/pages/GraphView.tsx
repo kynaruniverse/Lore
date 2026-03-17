@@ -2,172 +2,131 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { ArrowLeft, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
+import { categoryConfig } from '../lib/contentConfig'
+import type { PageCategory } from '../lib/contentConfig'
 
-// ── Types ───────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 interface GraphNode {
-  id:       string
-  title:    string
-  category: string
-  slug:     string
-  x:        number
-  y:        number
-  vx:       number
-  vy:       number
-  radius:   number
+  id: string; title: string; category: string; slug: string
+  x: number; y: number; vx: number; vy: number; radius: number
 }
+interface GraphEdge { source: string; target: string; type: string; label: string | null }
+interface LoreMeta  { id: string; slug: string; title: string }
 
-interface GraphEdge {
-  source: string
-  target: string
-  type:   string
-  label:  string | null
-}
-
-interface LoreMeta {
-  id:    string
-  slug:  string
-  title: string
-}
-
-// ── Constants ────────────────────────────────────────────────────────────────
+// ── Canvas constants ──────────────────────────────────────────────────────────
 const CANVAS_W = 800
 const CANVAS_H = 600
 const CENTER_X = CANVAS_W / 2
 const CENTER_Y = CANVAS_H / 2
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Character:    '#C4A962',
-  Location:     '#4A7FA5',
-  Event:        '#8B5BA5',
-  Item:         '#4A9A6A',
-  Organisation: '#A55B6A',
-  default:      '#606060',
+// ── Derive colors from categoryConfig (single source of truth) ────────────────
+function getCategoryHex(category: string): string {
+  return categoryConfig[category as PageCategory]?.hex ?? '#606060'
 }
 
-// ── Force simulation helpers (pure, no setState inside rAF) ─────────────────
+// ── Force simulation ──────────────────────────────────────────────────────────
 function tick(nodes: GraphNode[], edges: GraphEdge[]): GraphNode[] {
   const next = nodes.map(n => ({ ...n }))
 
-  // Repulsion
   for (let i = 0; i < next.length; i++) {
     for (let j = i + 1; j < next.length; j++) {
-      const dx   = next[j].x - next[i].x
-      const dy   = next[j].y - next[i].y
+      const dx = next[j].x - next[i].x, dy = next[j].y - next[i].y
       const dist = Math.sqrt(dx * dx + dy * dy) || 1
-      const f    = 6000 / (dist * dist)
-      const fx   = (dx / dist) * f
-      const fy   = (dy / dist) * f
+      const f = 6000 / (dist * dist)
+      const fx = (dx / dist) * f, fy = (dy / dist) * f
       next[i].vx -= fx; next[i].vy -= fy
       next[j].vx += fx; next[j].vy += fy
     }
   }
 
-  // Edge attraction
   for (const edge of edges) {
     const s = next.find(n => n.id === edge.source)
     const t = next.find(n => n.id === edge.target)
     if (!s || !t) continue
-    const dx   = t.x - s.x
-    const dy   = t.y - s.y
+    const dx = t.x - s.x, dy = t.y - s.y
     const dist = Math.sqrt(dx * dx + dy * dy) || 1
-    const f    = (dist - 150) * 0.005
-    const fx   = (dx / dist) * f
-    const fy   = (dy / dist) * f
-    s.vx += fx; s.vy += fy
-    t.vx -= fx; t.vy -= fy
+    const f = (dist - 150) * 0.005
+    const fx = (dx / dist) * f, fy = (dy / dist) * f
+    s.vx += fx; s.vy += fy; t.vx -= fx; t.vy -= fy
   }
 
-  // Gravity toward center
   for (const n of next) {
     n.vx += (CENTER_X - n.x) * 0.004
     n.vy += (CENTER_Y - n.y) * 0.004
-    // Damping
-    n.vx *= 0.92
-    n.vy *= 0.92
-    n.x  = Math.max(40, Math.min(CANVAS_W - 40, n.x + n.vx))
-    n.y  = Math.max(40, Math.min(CANVAS_H - 40, n.y + n.vy))
+    n.vx *= 0.92; n.vy *= 0.92
+    n.x = Math.max(40, Math.min(CANVAS_W - 40, n.x + n.vx))
+    n.y = Math.max(40, Math.min(CANVAS_H - 40, n.y + n.vy))
   }
-
   return next
 }
 
+// ── Draw ──────────────────────────────────────────────────────────────────────
 function drawGraph(
-  ctx:         CanvasRenderingContext2D,
-  nodes:       GraphNode[],
-  edges:       GraphEdge[],
-  hoveredId:   string | null,
+  ctx: CanvasRenderingContext2D,
+  nodes: GraphNode[], edges: GraphEdge[],
+  hoveredId: string | null, zoom: number,
 ) {
   ctx.clearRect(0, 0, CANVAS_W, CANVAS_H)
+  ctx.save()
+  ctx.translate(CENTER_X, CENTER_Y)
+  ctx.scale(zoom, zoom)
+  ctx.translate(-CENTER_X, -CENTER_Y)
 
-  // Edges
-  ctx.lineWidth = 1.5
-  ctx.setLineDash([4, 4])
   for (const edge of edges) {
     const s = nodes.find(n => n.id === edge.source)
     const t = nodes.find(n => n.id === edge.target)
     if (!s || !t) continue
     const hot = hoveredId === s.id || hoveredId === t.id
-    ctx.strokeStyle  = hot ? '#C4A962' : '#2E2E2E'
-    ctx.globalAlpha  = hot ? 0.9 : 0.4
+    ctx.strokeStyle = hot ? '#C4A962' : '#2E2E2E'
+    ctx.globalAlpha = hot ? 0.9 : 0.4
+    ctx.lineWidth   = 1.5
     ctx.setLineDash(hot ? [] : [4, 4])
-    ctx.beginPath()
-    ctx.moveTo(s.x, s.y)
-    ctx.lineTo(t.x, t.y)
-    ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(t.x, t.y); ctx.stroke()
   }
-  ctx.setLineDash([])
-  ctx.globalAlpha = 1
+  ctx.setLineDash([]); ctx.globalAlpha = 1
 
-  // Nodes
   for (const node of nodes) {
-    const color  = CATEGORY_COLORS[node.category] ?? CATEGORY_COLORS.default
-    const hot    = hoveredId === node.id
-    const r      = hot ? node.radius + 3 : node.radius
+    const color = getCategoryHex(node.category)
+    const hot   = hoveredId === node.id
+    const r     = hot ? node.radius + 3 : node.radius
 
-    if (hot) {
-      ctx.shadowColor = color
-      ctx.shadowBlur  = 18
-    }
-
-    ctx.beginPath()
-    ctx.arc(node.x, node.y, r, 0, 2 * Math.PI)
+    if (hot) { ctx.shadowColor = color; ctx.shadowBlur = 18 }
+    ctx.beginPath(); ctx.arc(node.x, node.y, r, 0, 2 * Math.PI)
     ctx.fillStyle   = color
     ctx.globalAlpha = hot ? 1 : 0.8
     ctx.fill()
+    ctx.strokeStyle = '#1A1A1A'; ctx.lineWidth = 2; ctx.stroke()
+    ctx.shadowBlur  = 0; ctx.globalAlpha = 1
 
-    ctx.strokeStyle = '#1A1A1A'
-    ctx.lineWidth   = 2
-    ctx.stroke()
-    ctx.shadowBlur  = 0
-    ctx.globalAlpha = 1
-
-    // Label
     const label = node.title.length > 16 ? node.title.slice(0, 13) + '…' : node.title
-    ctx.font      = hot ? 'bold 11px Inter, sans-serif' : '11px Inter, sans-serif'
+    ctx.font      = hot ? 'bold 11px Inter,sans-serif' : '11px Inter,sans-serif'
     ctx.fillStyle = hot ? '#E5E5E5' : '#909090'
     ctx.textAlign = 'center'
     ctx.fillText(label, node.x, node.y + r + 14)
   }
+  ctx.restore()
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function GraphView() {
-  const { loreSlug }     = useParams<{ loreSlug: string }>()
-  const navigate          = useNavigate()
-  const canvasRef         = useRef<HTMLCanvasElement>(null)
-  const nodesRef          = useRef<GraphNode[]>([])
-  const edgesRef          = useRef<GraphEdge[]>([])
-  const animRef           = useRef<number>(0)
-  const hoveredRef        = useRef<string | null>(null)
+  const { loreSlug } = useParams<{ loreSlug: string }>()
+  const navigate      = useNavigate()
+  const canvasRef     = useRef<HTMLCanvasElement>(null)
+  const nodesRef      = useRef<GraphNode[]>([])
+  const edgesRef      = useRef<GraphEdge[]>([])
+  const animRef       = useRef<number | null>(null)
+  const hoveredRef    = useRef<string | null>(null)
+  const zoomRef       = useRef<number>(1)
 
-  const [lore, setLore]       = useState<LoreMeta | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [lore, setLore]               = useState<LoreMeta | null>(null)
+  const [loading, setLoading]         = useState(true)
   const [hoveredNode, setHoveredNode] = useState<string | null>(null)
-  const [zoom, setZoom]       = useState(1)
-  const [nodeCount, setNodeCount] = useState(0)
-  const [edgeCount, setEdgeCount] = useState(0)
+  const [zoom, setZoom]               = useState(1)
+  const [nodeCount, setNodeCount]     = useState(0)
+  const [edgeCount, setEdgeCount]     = useState(0)
 
-  // ── Fetch ──────────────────────────────────────────────────────────────────
+  useEffect(() => { zoomRef.current = zoom }, [zoom])
+
   useEffect(() => {
     if (!loreSlug) return
     let cancelled = false
@@ -184,8 +143,7 @@ export default function GraphView() {
         if (pe) throw pe
 
         const { data: rels } = await supabase
-          .from('relationships')
-          .select('*')
+          .from('relationships').select('*')
           .in('source_page_id', (pages ?? []).map(p => p.id))
 
         if (cancelled) return
@@ -194,20 +152,15 @@ export default function GraphView() {
           const angle = (i / (pages ?? []).length) * 2 * Math.PI
           return {
             id: p.id, title: p.title, category: p.category, slug: p.slug,
-            x:  CENTER_X + Math.cos(angle) * 180 * (0.7 + Math.random() * 0.6),
-            y:  CENTER_Y + Math.sin(angle) * 140 * (0.7 + Math.random() * 0.6),
-            vx: (Math.random() - 0.5) * 2,
-            vy: (Math.random() - 0.5) * 2,
-            radius: 18,
+            x: CENTER_X + Math.cos(angle) * 180 * (0.7 + Math.random() * 0.6),
+            y: CENTER_Y + Math.sin(angle) * 140 * (0.7 + Math.random() * 0.6),
+            vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, radius: 18,
           }
         })
 
         nodesRef.current = initialNodes
         edgesRef.current = (rels ?? []).map(r => ({
-          source: r.source_page_id,
-          target: r.target_page_id,
-          type:   r.type,
-          label:  r.label,
+          source: r.source_page_id, target: r.target_page_id, type: r.type, label: r.label,
         }))
         setNodeCount(initialNodes.length)
         setEdgeCount(edgesRef.current.length)
@@ -222,48 +175,41 @@ export default function GraphView() {
     return () => { cancelled = true }
   }, [loreSlug])
 
-  // ── Animation loop ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (loading || nodesRef.current.length === 0) return
-
     const canvas = canvasRef.current
     const ctx    = canvas?.getContext('2d')
     if (!canvas || !ctx) return
 
     let frame = 0
-
     const loop = () => {
-      // Run simulation every frame, draw every frame
-      if (frame % 1 === 0) {
-        nodesRef.current = tick(nodesRef.current, edgesRef.current)
-      }
-      drawGraph(ctx, nodesRef.current, edgesRef.current, hoveredRef.current)
+      if (frame % 2 === 0) nodesRef.current = tick(nodesRef.current, edgesRef.current)
+      drawGraph(ctx, nodesRef.current, edgesRef.current, hoveredRef.current, zoomRef.current)
       frame++
       animRef.current = requestAnimationFrame(loop)
     }
-
     animRef.current = requestAnimationFrame(loop)
-    return () => cancelAnimationFrame(animRef.current)
+    return () => { if (animRef.current !== null) cancelAnimationFrame(animRef.current) }
   }, [loading])
 
-  // ── Mouse interaction (zoom-aware) ─────────────────────────────────────────
   const getCanvasCoords = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     if (!canvas) return { x: 0, y: 0 }
-    const rect   = canvas.getBoundingClientRect()
-    // Account for CSS zoom transform
+    const rect = canvas.getBoundingClientRect()
+    const cssX = e.clientX - rect.left, cssY = e.clientY - rect.top
+    const canvasX = cssX * (CANVAS_W / rect.width)
+    const canvasY = cssY * (CANVAS_H / rect.height)
     return {
-      x: ((e.clientX - rect.left) / zoom) * (CANVAS_W / (rect.width / zoom)),
-      y: ((e.clientY - rect.top)  / zoom) * (CANVAS_H / (rect.height / zoom)),
+      x: (canvasX - CENTER_X) / zoomRef.current + CENTER_X,
+      y: (canvasY - CENTER_Y) / zoomRef.current + CENTER_Y,
     }
-  }, [zoom])
+  }, [])
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = getCanvasCoords(e)
     let found: string | null = null
     for (const node of nodesRef.current) {
-      const dx   = x - node.x
-      const dy   = y - node.y
+      const dx = x - node.x, dy = y - node.y
       if (Math.sqrt(dx * dx + dy * dy) < node.radius + 8) { found = node.id; break }
     }
     hoveredRef.current = found
@@ -271,14 +217,10 @@ export default function GraphView() {
   }, [getCanvasCoords])
 
   const handleClick = useCallback(() => {
-    const id   = hoveredRef.current
-    const node = nodesRef.current.find(n => n.id === id)
+    const node = nodesRef.current.find(n => n.id === hoveredRef.current)
     if (node && lore) navigate(`/lore/${lore.slug}/${node.slug}`)
   }, [lore, navigate])
 
-  const resetZoom = () => setZoom(1)
-
-  // ── UI ─────────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0F0F0F] flex items-center justify-center">
@@ -298,15 +240,15 @@ export default function GraphView() {
     )
   }
 
+  // Legend entries derived from categoryConfig — only categories present in the graph
+  const presentCategories = Array.from(new Set(nodesRef.current.map(n => n.category)))
+
   return (
     <div className="min-h-screen bg-[#0F0F0F]">
-      {/* Header */}
       <header className="sticky top-0 z-50 bg-[#0F0F0F]/90 backdrop-blur-md border-b border-[#2A2A2A]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <Link
-            to={`/lore/${lore.slug}`}
-            className="inline-flex items-center gap-2 text-[#A0A0A0] hover:text-[#E5E5E5] transition-colors"
-          >
+          <Link to={`/lore/${lore.slug}`}
+            className="inline-flex items-center gap-2 text-[#A0A0A0] hover:text-[#E5E5E5] transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm">{lore.title}</span>
           </Link>
@@ -319,7 +261,7 @@ export default function GraphView() {
               className="p-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg hover:bg-[#222] transition-colors">
               <ZoomOut className="w-4 h-4 text-[#A0A0A0]" />
             </button>
-            <button onClick={resetZoom}
+            <button onClick={() => setZoom(1)}
               className="p-2 bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg hover:bg-[#222] transition-colors">
               <RotateCcw className="w-4 h-4 text-[#A0A0A0]" />
             </button>
@@ -328,37 +270,30 @@ export default function GraphView() {
       </header>
 
       <div className="p-4 sm:p-6">
-        {/* Canvas container — zoom applied to the wrapper, not the canvas itself,
-            so mouse coordinates stay accurate */}
-        <div
-          className="relative border border-[#2A2A2A] rounded-2xl overflow-hidden bg-[#111] max-w-4xl mx-auto"
-          style={{ transformOrigin: 'top left' }}
-        >
-          <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.15s ease' }}>
-            <canvas
-              ref={canvasRef}
-              width={CANVAS_W}
-              height={CANVAS_H}
-              className="w-full h-auto block"
-              style={{ cursor: hoveredNode ? 'pointer' : 'default' }}
-              onMouseMove={handleMouseMove}
-              onMouseLeave={() => { hoveredRef.current = null; setHoveredNode(null) }}
-              onClick={handleClick}
-            />
-          </div>
+        <div className="relative border border-[#2A2A2A] rounded-2xl overflow-hidden bg-[#111] max-w-4xl mx-auto">
+          <canvas
+            ref={canvasRef} width={CANVAS_W} height={CANVAS_H}
+            className="w-full h-auto block"
+            style={{ cursor: hoveredNode ? 'pointer' : 'default' }}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={() => { hoveredRef.current = null; setHoveredNode(null) }}
+            onClick={handleClick}
+          />
 
-          {/* Legend */}
+          {/* Legend — only shows categories actually in this graph, with icons */}
           <div className="absolute bottom-4 right-4 bg-[#0F0F0F]/90 backdrop-blur-sm border border-[#2A2A2A] rounded-xl p-3">
             <p className="text-[10px] font-semibold text-[#606060] uppercase tracking-widest mb-2">Categories</p>
             <div className="space-y-1.5">
-              {Object.entries(CATEGORY_COLORS)
-                .filter(([k]) => k !== 'default')
-                .map(([cat, color]) => (
+              {presentCategories.map(cat => {
+                const cfg = categoryConfig[cat as PageCategory]
+                return (
                   <div key={cat} className="flex items-center gap-2 text-xs text-[#A0A0A0]">
-                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: getCategoryHex(cat) }} />
+                    {cfg?.icon && <span className="text-xs leading-none">{cfg.icon}</span>}
                     {cat}
                   </div>
-                ))}
+                )
+              })}
             </div>
           </div>
 

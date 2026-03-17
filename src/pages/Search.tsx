@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Search as SearchIcon, FileText, Flame, ArrowRight, X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
@@ -6,35 +6,43 @@ import { supabase } from '../lib/supabaseClient'
 type ResultType = 'page' | 'lore'
 
 interface SearchResult {
-  id: string
-  title: string
-  slug: string
-  excerpt: string
-  category: string
-  type: ResultType
-  lore_slug?: string
+  id:          string
+  title:       string
+  slug:        string
+  excerpt:     string
+  category:    string
+  type:        ResultType
+  lore_slug?:  string
   lore_title?: string
   cover_image?: string
 }
 
 interface SupabasePage {
-  id: string
-  title: string
-  slug: string
-  excerpt: string
+  id:       string
+  title:    string
+  slug:     string
+  excerpt:  string
   category: string
-  lore_id: string
+  lore_id:  string
   lores: {
-    slug: string
+    slug:  string
     title: string
   }
 }
 
 export default function Search() {
-  const [query, setQuery]               = useState('')
-  const [debouncedQuery, setDebounced]  = useState('')
-  const [results, setResults]           = useState<SearchResult[]>([])
-  const [loading, setLoading]           = useState(false)
+  const [query, setQuery]              = useState('')
+  const [debouncedQuery, setDebounced] = useState('')
+  const [results, setResults]          = useState<SearchResult[]>([])
+  const [loading, setLoading]          = useState(false)
+  const inputRef                        = useRef<HTMLInputElement>(null)
+
+  // Focus input on mount without triggering mobile keyboard immediately
+  // (only auto-focuses on non-touch devices)
+  useEffect(() => {
+    const isTouchDevice = window.matchMedia('(hover: none)').matches
+    if (!isTouchDevice) inputRef.current?.focus()
+  }, [])
 
   // Debounce
   useEffect(() => {
@@ -76,7 +84,7 @@ export default function Search() {
             id:          l.id,
             title:       l.title,
             slug:        l.slug,
-            excerpt:     l.description,
+            excerpt:     l.description ?? '',
             category:    l.category,
             type:        'lore' as const,
             cover_image: l.cover_image_url,
@@ -113,25 +121,31 @@ export default function Search() {
       {/* Title */}
       <div className="mb-6">
         <h1 className="text-3xl font-serif font-bold text-[#E5E5E5] mb-1">Search</h1>
-        <p className="text-sm text-[#606060]">Press <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#2A2A2A] rounded text-[#A0A0A0] text-xs font-mono">/</kbd> anywhere to focus</p>
+        <p className="text-sm text-[#606060]">
+          Press{' '}
+          <kbd className="px-1.5 py-0.5 bg-[#1A1A1A] border border-[#2A2A2A] rounded text-[#A0A0A0] text-xs font-mono">
+            /
+          </kbd>{' '}
+          anywhere to focus
+        </p>
       </div>
 
       {/* Input */}
       <div className="relative mb-8">
         <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#505050]" />
         <input
+          ref={inputRef}
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search pages, characters, locations..."
-          autoFocus
           className="w-full pl-10 pr-10 py-3 bg-[#111] border border-[#2A2A2A] rounded-xl
                      text-[#E5E5E5] placeholder-[#404040]
                      focus:outline-none focus:border-[#C4A962] transition-colors"
         />
         {query && (
           <button
-            onClick={() => setQuery('')}
+            onClick={() => { setQuery(''); inputRef.current?.focus() }}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-[#505050] hover:text-[#A0A0A0] transition-colors"
           >
             <X className="w-4 h-4" />
@@ -139,7 +153,7 @@ export default function Search() {
         )}
       </div>
 
-      {/* States */}
+      {/* Loading */}
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
@@ -148,12 +162,14 @@ export default function Search() {
         </div>
       )}
 
+      {/* Empty state */}
       {!loading && debouncedQuery.length >= 2 && results.length === 0 && (
         <p className="text-center text-[#505050] py-12">
           No results for <span className="text-[#A0A0A0]">"{debouncedQuery}"</span>
         </p>
       )}
 
+      {/* Results */}
       {!loading && results.length > 0 && (
         <div className="space-y-8">
           {/* Lores */}
@@ -171,7 +187,11 @@ export default function Search() {
                                rounded-xl hover:border-[#C4A962]/40 transition-colors group"
                   >
                     {r.cover_image && (
-                      <img src={r.cover_image} alt={r.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                      <img
+                        src={r.cover_image}
+                        alt={r.title}
+                        className="w-10 h-10 rounded-lg object-cover shrink-0"
+                      />
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-[#E5E5E5] group-hover:text-[#C4A962] transition-colors truncate">

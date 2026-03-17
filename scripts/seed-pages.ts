@@ -1,15 +1,7 @@
-import * as dotenv from 'dotenv'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import 'dotenv/config'
 import { supabase } from '../src/lib/supabaseClient'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-dotenv.config({ path: path.resolve(__dirname, '../.env') })
-
 async function seedPages() {
-  // Get Breaking Bad lore ID
   const { data: lore } = await supabase
     .from('lores')
     .select('id')
@@ -17,7 +9,7 @@ async function seedPages() {
     .single()
 
   if (!lore) {
-    console.error('Breaking Bad lore not found')
+    console.error('Breaking Bad lore not found. Run the main seed first.')
     return
   }
 
@@ -32,7 +24,7 @@ async function seedPages() {
       image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80',
       tags: ['Protagonist', 'Heisenberg', 'Chemistry'],
       completeness: 85,
-      missing_fields: ['Early childhood details']
+      missing_fields: ['Early childhood details'],
     },
     {
       lore_id: lore.id,
@@ -44,7 +36,7 @@ async function seedPages() {
       image_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80',
       tags: ['Protagonist', 'Cook', 'Redemption'],
       completeness: 70,
-      missing_fields: ['Alaska timeline']
+      missing_fields: ['Alaska timeline'],
     },
     {
       lore_id: lore.id,
@@ -56,7 +48,7 @@ async function seedPages() {
       image_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&q=80',
       tags: ['Antagonist', 'Cartel', 'Los Pollos Hermanos'],
       completeness: 65,
-      missing_fields: ['Chile backstory']
+      missing_fields: ['Chile backstory'],
     },
     {
       lore_id: lore.id,
@@ -68,21 +60,20 @@ async function seedPages() {
       image_url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&q=80',
       tags: ['Location', 'New Mexico', 'Setting'],
       completeness: 45,
-      missing_fields: ['Filming locations map']
-    }
+      missing_fields: ['Filming locations map'],
+    },
   ]
 
-  for (const page of pages) {
-    const { error } = await supabase
-      .from('pages')
-      .insert(page)
-    
-    if (error) {
-      console.error(`Error seeding page ${page.title}:`, error)
-    } else {
-      console.log(`Seeded page: ${page.title}`)
-    }
-  }
+  const results = await Promise.all(
+    pages.map(page =>
+      supabase.from('pages').upsert(page, { onConflict: 'lore_id,slug' }).select()
+    )
+  )
+
+  results.forEach((result, i) => {
+    if (result.error) console.error(`Error seeding "${pages[i].title}":`, result.error)
+    else console.log(`Seeded: ${pages[i].title}`)
+  })
 
   // Update lore page count
   await supabase
@@ -91,10 +82,6 @@ async function seedPages() {
     .eq('id', lore.id)
 }
 
-seedPages().then(() => {
-  console.log('Page seeding complete')
-  process.exit(0)
-}).catch(err => {
-  console.error('Seeding failed:', err)
-  process.exit(1)
-})
+seedPages()
+  .then(() => { console.log('Page seeding complete'); process.exit(0) })
+  .catch(err => { console.error('Seeding failed:', err); process.exit(1) })

@@ -4,9 +4,9 @@ import { CheckCircle, XCircle, Info, X } from 'lucide-react'
 type ToastType = 'success' | 'error' | 'info'
 
 interface Toast {
-  id: string
+  id:      string
   message: string
-  type: ToastType
+  type:    ToastType
 }
 
 interface ToastContextType {
@@ -26,12 +26,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }, 4000)
   }, [])
 
-  const dismiss = (id: string) => setToasts(prev => prev.filter(t => t.id !== id))
+  const dismiss = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id))
+  }, [])
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
+      {/* bottom-24 floats above the fixed bottom nav bar */}
+      <div className="fixed bottom-24 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
         {toasts.map(toast => (
           <ToastItem key={toast.id} toast={toast} onDismiss={dismiss} />
         ))}
@@ -44,15 +47,14 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: string)
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    // Trigger enter animation
     const t = setTimeout(() => setVisible(true), 10)
     return () => clearTimeout(t)
   }, [])
 
   const icons = {
     success: <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />,
-    error:   <XCircle    className="w-5 h-5 text-red-400 shrink-0" />,
-    info:    <Info       className="w-5 h-5 text-[#C4A962] shrink-0" />,
+    error:   <XCircle     className="w-5 h-5 text-red-400 shrink-0" />,
+    info:    <Info        className="w-5 h-5 text-[#C4A962] shrink-0" />,
   }
 
   const borders = {

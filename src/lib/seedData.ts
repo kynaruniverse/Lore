@@ -11,7 +11,7 @@ export const seedLores = [
     color: '#C4622D',
     tags: ['Drama', 'Crime', 'AMC', 'Vince Gilligan'],
     trending: true,
-    is_public: true
+    is_public: true,
   },
   {
     title: 'Elden Ring',
@@ -23,7 +23,7 @@ export const seedLores = [
     color: '#B8922A',
     tags: ['FromSoftware', 'RPG', 'Fantasy', 'Soulslike'],
     trending: true,
-    is_public: true
+    is_public: true,
   },
   {
     title: 'The Witcher',
@@ -35,7 +35,7 @@ export const seedLores = [
     color: '#8B5A2B',
     tags: ['Fantasy', 'Netflix', 'Andrzej Sapkowski', 'Monsters'],
     trending: true,
-    is_public: true
+    is_public: true,
   },
   {
     title: 'Game of Thrones',
@@ -47,7 +47,7 @@ export const seedLores = [
     color: '#8B5E3C',
     tags: ['HBO', 'Fantasy', 'George R.R. Martin', 'Westeros'],
     trending: true,
-    is_public: true
+    is_public: true,
   },
   {
     title: 'The Lord of the Rings',
@@ -59,7 +59,7 @@ export const seedLores = [
     color: '#4A7C59',
     tags: ['Tolkien', 'Fantasy', 'Middle-earth', 'Epic'],
     trending: false,
-    is_public: true
+    is_public: true,
   },
   {
     title: 'Formula 1',
@@ -71,8 +71,8 @@ export const seedLores = [
     color: '#E8002D',
     tags: ['Motorsport', 'Racing', 'FIA', 'Grand Prix'],
     trending: true,
-    is_public: true
-  }
+    is_public: true,
+  },
 ]
 
 export async function seedDatabase() {
@@ -81,8 +81,8 @@ export async function seedDatabase() {
       .from('lores')
       .upsert(lore, { onConflict: 'slug' })
       .select()
-    
+
     if (error) console.error('Error seeding lore:', error)
-    else console.log('Seeded lore:', data[0].title)
+    else console.log('Seeded lore:', data?.[0]?.title)
   }
 }
