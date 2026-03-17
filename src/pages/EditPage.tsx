@@ -25,7 +25,7 @@ export default function EditPage() {
         const { data: loreData, error: le } = await supabase
           .from('lores')
           .select('id, title, slug')
-          .eq('slug', loreSlug)
+          .eq('slug', loreSlug!)
           .single()
         if (le || !loreData) throw le ?? new Error('Lore not found')
         if (!cancelled) setLore(loreData)
@@ -34,7 +34,7 @@ export default function EditPage() {
           .from('pages')
           .select('*')
           .eq('lore_id', loreData.id)
-          .eq('slug', pageSlug)
+          .eq('slug', pageSlug!)
           .single()
         if (pe || !pageData) throw pe ?? new Error('Page not found')
         if (!cancelled) setPage(pageData)
@@ -112,7 +112,13 @@ export default function EditPage() {
       <PageForm
         loreId={lore.id}
         loreSlug={lore.slug}
-        initialData={page}
+        initialData={{
+          id:       page.id,
+          title:    page.title,
+          content:  page.content,
+          category: page.category,
+          tags:     page.tags,
+        }}
         isEditing
         onSuccess={slug => navigate(`/lore/${loreSlug}/${slug}`)}
         showToast={showToast}

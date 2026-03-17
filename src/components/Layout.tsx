@@ -17,7 +17,10 @@ const NAV_ITEMS = [
   { to: '/create', icon: PlusCircle, label: 'Create', match: (p: string) => p.startsWith('/create')      },
 ]
 
-const AUTH_NAV_ITEM = {
+type NavItem = { to: string; icon: React.ElementType; label: string; match: (p: string) => boolean }
+type AuthNavItem = NavItem | { to?: undefined; icon: React.ElementType; label: string; match?: undefined }
+
+const AUTH_NAV_ITEM: { login: NavItem; logout: AuthNavItem } = {
   login: { to: '/login', icon: LogIn, label: 'Login', match: (p: string) => p.startsWith('/login') },
   logout: { icon: LogOut, label: 'Logout' },
 }
@@ -31,9 +34,9 @@ export default function Layout({ children }: LayoutProps) {
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
     if (error) {
-      showToast({ message: error.message, type: 'error' })
+      showToast(error.message, 'error')
     } else {
-      showToast({ message: 'Logged out successfully!', type: 'info' })
+      showToast('Logged out successfully!', 'info')
       navigate('/login')
     }
   }
@@ -98,7 +101,7 @@ export default function Layout({ children }: LayoutProps) {
                   </motion.div>
                   <span
                     className={`text-[10px] font-medium tracking-wide uppercase transition-colors duration-200 ${
-                      active ? 'text-[#C4A962]' : 'text-[#505050]'}
+                      active ? 'text-[#C4A962]' : 'text-[#505050]'
                     }`}
                   >
                     {label}

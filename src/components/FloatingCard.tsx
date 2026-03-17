@@ -4,13 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { RotateCcw } from 'lucide-react'
 
 interface FloatingCardProps {
+  id?:               string
   title:             string
   description:       string
-  imageUrl:          string
+  imageUrl:          string | null
   slug:              string
-  pageCount?:        number
-  contributorCount?: number
-  category?:         string
+  pageCount?:        number | null
+  contributorCount?: number | null
+  category?:         string | null
 }
 
 function useStableRandom(min: number, max: number) {
@@ -20,6 +21,7 @@ function useStableRandom(min: number, max: number) {
 }
 
 export default function FloatingCard({
+  id: _id,
   title,
   description,
   imageUrl,

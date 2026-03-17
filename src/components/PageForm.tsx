@@ -5,11 +5,12 @@ import type { PageCategory } from '../lib/contentConfig'
 
 interface PageFormProps {
   loreId:      string
+  loreSlug?:   string
   initialData?: {
     id:       string
     title:    string
     content:  string
-    category: string
+    category: string | null
     tags:     string[]
   }
   isEditing?: boolean
@@ -29,6 +30,7 @@ function buildSlug(title: string): string {
 
 export default function PageForm({
   loreId,
+  loreSlug: _loreSlug,
   initialData,
   isEditing = false,
   onSuccess,

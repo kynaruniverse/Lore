@@ -38,14 +38,14 @@ export default function EditLore() {
     async function fetchLore() {
       try {
         const { data, error } = await supabase
-          .from('lores').select('*').eq('slug', loreSlug).single()
+          .from('lores').select('*').eq('slug', loreSlug!).single()
         if (error || !data) throw error ?? new Error('Not found')
         if (!cancelled) {
           setLore(data)
           setForm({
             title:           data.title,
             description:     data.description ?? '',
-            category:        data.category,
+            category:        data.category ?? 'other',
             tags:            data.tags?.join(', ') ?? '',
             cover_image_url: data.cover_image_url ?? '',
             hero_image_url:  data.hero_image_url ?? '',

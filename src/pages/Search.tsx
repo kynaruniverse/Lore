@@ -10,7 +10,7 @@ interface SearchResult {
   title:       string
   slug:        string
   excerpt:     string
-  category:    string
+  category:    string | null
   type:        ResultType
   lore_slug?:  string
   lore_title?: string

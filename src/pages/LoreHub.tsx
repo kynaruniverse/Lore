@@ -58,7 +58,7 @@ export default function LoreHub() {
     async function fetchLoreAndPages() {
       try {
         const { data: loreData, error: le } = await supabase
-          .from('lores').select('*').eq('slug', loreSlug).single()
+          .from('lores').select('*').eq('slug', loreSlug!).single()
         if (le || !loreData) throw le ?? new Error('Not found')
         if (!cancelled) setLore(loreData)
 
@@ -77,7 +77,7 @@ export default function LoreHub() {
     return () => { cancelled = true }
   }, [loreSlug])
 
-  const categories = ['All', ...Array.from(new Set(pages.map(p => p.category))).sort()]
+  const categories = ['All', ...Array.from(new Set(pages.map(p => p.category ?? 'Other'))).sort()]
   const filtered   = activeCategory === 'All' ? pages : pages.filter(p => p.category === activeCategory)
 
   if (loading) {
@@ -181,7 +181,7 @@ export default function LoreHub() {
               return (
                 <button
                   key={cat}
-                  onClick={() => setActiveCategory(cat)}
+                  onClick={() => setActiveCategory(cat ?? 'Other')}
                   className={`shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     active
                       ? 'bg-[#C4A962] text-[#0F0F0F] border-[#C4A962] font-semibold'

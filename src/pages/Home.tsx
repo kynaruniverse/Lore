@@ -5,7 +5,16 @@ import { supabase } from '../lib/supabaseClient'
 import FloatingCard from '../components/FloatingCard'
 import { motion } from 'framer-motion'
 import { useTheme } from '../contexts/ThemeContext'
-import type { Lore } from '../lib/loreStore'
+type LoreCard = {
+  id: string
+  slug: string
+  title: string
+  description: string
+  cover_image_url: string
+  category: string | null
+  page_count: number
+  contributor_count: number
+}
 
 const MotionLink = motion(Link)
 
@@ -39,7 +48,7 @@ function ContrastIcon({ isDark }: { isDark: boolean }) {
 }
 
 export default function Home() {
-  const [lores, setLores]     = useState<Lore[]>([])
+  const [lores, setLores]     = useState<LoreCard[]>([])
   const [loading, setLoading] = useState(true)
   const { theme, toggleTheme } = useTheme()
   const isDark = theme === 'dark'

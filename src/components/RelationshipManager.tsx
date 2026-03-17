@@ -10,7 +10,7 @@ interface RelatedPage {
   id:       string
   title:    string
   slug:     string
-  category: string
+  category: string | null
 }
 
 interface Relationship {

@@ -7,7 +7,7 @@ import type { PageCategory } from '../lib/contentConfig'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface GraphNode {
-  id: string; title: string; category: string; slug: string
+  id: string; title: string; category: string | null; slug: string
   x: number; y: number; vx: number; vy: number; radius: number
 }
 interface GraphEdge { source: string; target: string; type: string; label: string | null }
@@ -20,8 +20,8 @@ const CENTER_X = CANVAS_W / 2
 const CENTER_Y = CANVAS_H / 2
 
 // ── Derive colors from categoryConfig (single source of truth) ────────────────
-function getCategoryHex(category: string): string {
-  return categoryConfig[category as PageCategory]?.hex ?? '#606060'
+function getCategoryHex(category: string | null): string {
+  return categoryConfig[(category ?? '') as PageCategory]?.hex ?? '#606060'
 }
 
 // ── Force simulation ──────────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ export default function GraphView() {
     async function fetchData() {
       try {
         const { data: loreData, error: le } = await supabase
-          .from('lores').select('id, slug, title').eq('slug', loreSlug).single()
+          .from('lores').select('id, slug, title').eq('slug', loreSlug!).single()
         if (le || !loreData) throw le ?? new Error('Lore not found')
         if (!cancelled) setLore(loreData)
 
@@ -241,7 +241,7 @@ export default function GraphView() {
   }
 
   // Legend entries derived from categoryConfig — only categories present in the graph
-  const presentCategories = Array.from(new Set(nodesRef.current.map(n => n.category)))
+  const presentCategories = Array.from(new Set(nodesRef.current.map(n => n.category).filter((c): c is string => c !== null)))
 
   return (
     <div className="min-h-screen bg-[#0F0F0F]">

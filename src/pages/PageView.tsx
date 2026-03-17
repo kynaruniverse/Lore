@@ -85,7 +85,7 @@ function BottomNav() {
 
 // ── Empty content hint ────────────────────────────────────────────────────────
 function EmptyContentHint({ category, loreSlug, pageSlug }: {
-  category: string; loreSlug: string; pageSlug: string
+  category: string | null; loreSlug: string; pageSlug: string
 }) {
   const cfg      = categoryConfig[category as PageCategory]
   const criteria = completenessCriteria[category as PageCategory]
@@ -137,12 +137,12 @@ export default function PageView() {
     async function fetchPage() {
       try {
         const { data: loreData, error: le } = await supabase
-          .from('lores').select('id, slug, title').eq('slug', loreSlug).single()
+          .from('lores').select('id, slug, title').eq('slug', loreSlug!).single()
         if (le || !loreData) throw le ?? new Error('Lore not found')
         if (!cancelled) setLore(loreData)
 
         const { data: pageData, error: pe } = await supabase
-          .from('pages').select('*').eq('lore_id', loreData.id).eq('slug', pageSlug).single()
+          .from('pages').select('*').eq('lore_id', loreData.id).eq('slug', pageSlug!).single()
         if (pe || !pageData) throw pe ?? new Error('Page not found')
         if (!cancelled) setPage(pageData)
       } catch (err) {
