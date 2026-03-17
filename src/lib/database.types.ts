@@ -15,7 +15,7 @@ export interface Database {
           slug: string
           title: string
           description: string
-          category: string
+          category: string | null
           cover_image_url: string
           hero_image_url: string
           color: string
@@ -25,6 +25,7 @@ export interface Database {
           tags: string[]
           views: number
           trending: boolean
+          created_by: string | null
           created_at: string
           updated_at: string
         }
@@ -43,6 +44,7 @@ export interface Database {
           tags?: string[]
           views?: number
           trending?: boolean
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -61,6 +63,7 @@ export interface Database {
           tags?: string[]
           views?: number
           trending?: boolean
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -72,7 +75,7 @@ export interface Database {
           lore_id: string
           slug: string
           title: string
-          category: string
+          category: string | null
           content: string
           excerpt: string
           image_url: string | null
@@ -80,6 +83,7 @@ export interface Database {
           completeness: number
           missing_fields: string[]
           views: number
+          created_by: string | null
           created_at: string
           updated_at: string
         }
@@ -96,6 +100,7 @@ export interface Database {
           completeness?: number
           missing_fields?: string[]
           views?: number
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -112,6 +117,7 @@ export interface Database {
           completeness?: number
           missing_fields?: string[]
           views?: number
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }
